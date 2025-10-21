@@ -1,0 +1,25 @@
+# Development Notes
+
+## How to build
+* Write correct Go packages and imported module. 
+    * from outside e.g. `github.com/gin-gonic/gin`
+    * from inside e.g. `"UltimateDesktopPet/internal/synchronization"`
+* Initialize Go module if not yet done
+    * `go mod init UltimateDesktopPet`
+* Download dependencies
+    * `go mod tidy`
+* Build / Run the project
+    * `go build main.go`
+    * `go run main.go`
+* If you want to **stop** anything about internet process,
+    * Press `Ctrl + C` to gracefully stop the process.
+    * Don't `Ctrl + Z` or `Ctrl + D`, it may cause unexpected behavior. (usually block your port resources)
+
+## How to document API with Swagger
+* Install swag CLI tool (There website to download (swaggo)[https://github.com/swaggo/swag.git])
+* Write comments (follow the [documentation](https://github.com/swaggo/swag.git))
+    * Please ensure the url of swag comments in `main.go` is equal to the one of your system. 
+* Generate docs 
+    * `swag fmt ; swag init`
+* Run your application. (For the first time, you need to initialize modules first.)
+* Browse to `http://localhost:8080/swagger/index.html` to see the API documentation UI.

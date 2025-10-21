@@ -1,0 +1,46 @@
+basePath: /
+host: localhost:8080
+info:
+  contact:
+    name: Mushroom_MSL1L
+    url: https://github.com/Mushroom-MSL1L
+  description: Ultimate Desktop Pet API
+  license:
+    name: no license yet
+  title: Ultimate Desktop Pet API
+  version: "1.0"
+paths:
+  /swagger/doc.json:
+    get:
+      description: get Api docs in json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Show Api Docs in json
+      tags:
+      - docs
+  /sync:
+    get:
+      description: Pong
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: pong
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Ping
+      tags:
+      - temp
+swagger: "2.0"
+tags:
+- name: temp
+- name: docs
