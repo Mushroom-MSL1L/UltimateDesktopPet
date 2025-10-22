@@ -41,10 +41,6 @@ func (d *DB) connectDB() {
 	}
 }
 
-func (d *DB) loadSchema() {
-	initPetTable(d.db)
-}
-
 func (d *DB) CloseDB() {
 	if d.db == nil {
 		return
