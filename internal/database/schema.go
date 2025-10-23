@@ -1,6 +1,8 @@
 package database
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Schema interface {
 	InitTable(db *gorm.DB)

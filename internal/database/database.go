@@ -1,10 +1,10 @@
 package database
 
 import (
-	"log"
 	"time"
 
 	pkg "UltimateDesktopPet/pkg/file"
+	pp "UltimateDesktopPet/pkg/print"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -16,10 +16,11 @@ type DB struct {
 }
 
 func (d *DB) InitDB(dbFile string) {
-	log.Println("database init")
+	pp.Info(pp.DB, "DB initializing")
 	d.setdbFile(dbFile)
 	d.connectDB()
 	d.loadSchema()
+	pp.Assert(pp.DB, "DB working")
 }
 
 func (d *DB) setdbFile(dbFile string) {
@@ -29,26 +30,32 @@ func (d *DB) setdbFile(dbFile string) {
 
 func (d *DB) connectDB() {
 	var err error
-	for retry := 0; retry < 5; retry++ {
+	for retry := 1; retry <= 5; retry++ {
+		pp.Info(pp.DB, "DB %ded trying", retry)
 		d.db, err = gorm.Open(sqlite.Open(d.dbFile), &gorm.Config{})
 		if err == nil {
+			pp.Assert(pp.DB, "DB connected")
 			return
 		}
-		time.Sleep(time.Second)
+		waitTime := time.Second
+		time.Sleep(waitTime)
+		pp.Info(pp.DB, "DB %ded not response, wait %s seconds", waitTime)
 	}
 	if err != nil {
-		log.Fatalf("failed to open database after retries: %v", err)
+		pp.Fatal(pp.DB, "failed to open database after retries: %v", err)
 	}
 }
 
 func (d *DB) CloseDB() {
 	if d.db == nil {
+		pp.Info(pp.DB, "DB already closed")
 		return
 	}
 	sqlDB, err := d.db.DB()
 	if err != nil {
-		log.Printf("failed to get sql DB: %v", err)
+		pp.Fatal(pp.DB, "failed to get sql DB: %v", err)
 		return
 	}
 	sqlDB.Close()
+	pp.Assert(pp.DB, "DB closed")
 }

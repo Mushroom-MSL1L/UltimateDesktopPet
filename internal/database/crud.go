@@ -1,7 +1,7 @@
 package database
 
 import (
-	"log"
+	pp "UltimateDesktopPet/pkg/print"
 
 	"gorm.io/gorm"
 )
@@ -12,7 +12,7 @@ type BaseCRUD[T any] struct {
 
 func (b *BaseCRUD[T]) InitTable(db *gorm.DB) {
 	if err := db.AutoMigrate(b.Model); err != nil {
-		log.Fatalf("Init table %T error: %v", b.Model, err)
+		pp.Fatal(pp.DB, "Init table %T error: %v", b.Model, err)
 	}
 }
 

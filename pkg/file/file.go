@@ -1,7 +1,7 @@
 package file
 
 import (
-	"log"
+	pp "UltimateDesktopPet/pkg/print"
 	"os"
 	"path/filepath"
 )
@@ -12,39 +12,40 @@ func SafeCreateFile(filePath string) {
 		if !info.IsDir() {
 			return
 		}
-		log.Fatalf("path %s exists but is a directory", filePath)
+		pp.Fatal(pp.File, "path %s exists but is a directory", filePath)
 	}
 	if !os.IsNotExist(err) {
-		log.Fatalf("failed to check file %s: %v", filePath, err)
+		pp.Fatal(pp.File, "failed to check file %s: %v", filePath, err)
 	}
 
 	dir := filepath.Dir(filePath)
 	SafeCreateDir(dir)
+	pp.Warn(pp.File, "file not exist, so safe create %s", filePath)
 
 	f, err := os.Create(filePath)
 	if err != nil {
-		log.Fatalf("failed to create file %s: %v", filePath, err)
+		pp.Fatal(pp.File, "failed to create file %s: %v", filePath, err)
 	}
 	f.Close()
 }
 
 func SafeCreateDir(dir string) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		log.Fatalln("failed to create directory %s: %v", dir, err)
+		pp.Fatal(pp.File, "failed to create directory %s: %v", dir, err)
 	}
 }
 
 func SafeOpenFile(filePath string) *os.File {
 	if _, err := os.Stat(filePath); err != nil {
 		if os.IsNotExist(err) {
-			log.Fatalf("file %s does not exist: %v", filePath, err)
+			pp.Fatal(pp.File, "file %s does not exist: %v", filePath, err)
 		}
-		log.Fatalf("failed to check file %s: %v", filePath, err)
+		pp.Fatal(pp.File, "failed to check file %s: %v", filePath, err)
 	}
 
 	f, err := os.Open(filePath)
 	if err != nil {
-		log.Fatalf("failed to open file %s: %v", filePath, err)
+		pp.Fatal(pp.File, "failed to open file %s: %v", filePath, err)
 	}
 	return f
 }
