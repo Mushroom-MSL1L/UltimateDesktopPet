@@ -1,0 +1,10 @@
+configs/*.yaml
+configs/*.yml
+assets/db/*.db
+
+
+node_modules
+.DS_Store
+.vscode/*
+*.log
+*.local
