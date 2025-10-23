@@ -5,3 +5,11 @@ type System struct {
 	HostAddress string `yaml:"hostaddress"`
 	Port        string `yaml:"port"`
 }
+
+func (System) DefaultConfig() *System {
+	return &System{
+		DBFile:      "./assets/db/udp.db",
+		HostAddress: "localhost",
+		Port:        "8080",
+	}
+}
