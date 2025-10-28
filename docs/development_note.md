@@ -23,3 +23,28 @@
     * `swag fmt ; swag init`
 * Run your application. (For the first time, you need to initialize modules first.)
 * Browse to `http://localhost:8080/swagger/index.html` to see the API documentation UI.
+
+
+## Workflow 
+```
+Wails startup
+    |
+    | Load configuration
+    | Initialize system
+        | database
+        | network
+    | Start services
+        | go: pet 
+            | init 
+            | loop   <--------------|
+        | go: synchronization       |
+            | init                  |
+            | loop   <--------------|
+        | go: chat box              |
+            | init                  |
+            | loop   <--------------|
+Wails binding                       |
+    | Start GUI                     |
+        | Bottoms and event         |
+            | go: event -------------
+```
