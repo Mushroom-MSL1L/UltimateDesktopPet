@@ -19,7 +19,7 @@ func (d *DB) InitDB(dbFile string) {
 	pp.Info(pp.DB, "DB initializing")
 	d.setdbFile(dbFile)
 	d.connectDB()
-	d.loadSchema()
+	d.loadSchemas()
 	pp.Assert(pp.DB, "DB working")
 }
 
@@ -44,6 +44,10 @@ func (d *DB) connectDB() {
 	if err != nil {
 		pp.Fatal(pp.DB, "failed to open database after retries: %v", err)
 	}
+}
+
+func (d *DB) GetDB() *gorm.DB {
+	return d.db
 }
 
 func (d *DB) CloseDB() {

@@ -8,14 +8,14 @@ type Schema interface {
 	InitTable(db *gorm.DB)
 }
 
-var registerSchema []Schema
+var registerSchemas []Schema
 
 func RegisterSchema(s Schema) {
-	registerSchema = append(registerSchema, s)
+	registerSchemas = append(registerSchemas, s)
 }
 
-func (d *DB) loadSchema() {
-	for _, schema := range registerSchema {
+func (d *DB) loadSchemas() {
+	for _, schema := range registerSchemas {
 		schema.InitTable(d.db)
 	}
 }
