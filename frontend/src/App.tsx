@@ -1,28 +1,72 @@
-import {useState} from 'react';
-import logo from './assets/images/logo-universal.png';
+import {CSSProperties, useEffect, useMemo, useState} from 'react';
 import './App.css';
-import {Greet} from "../wailsjs/go/main/App";
+import {PetSprite} from "../wailsjs/go/main/App";
+import {WindowSetAlwaysOnTop} from "../wailsjs/runtime/runtime";
+
+const dragStyle: CSSProperties = {
+    ['--wails-draggable' as any]: 'drag',
+};
+
+const noDragStyle: CSSProperties = {
+    ['--wails-draggable' as any]: 'no-drag',
+};
 
 function App() {
-    const [resultText, setResultText] = useState("Please enter your name below 👇");
-    const [name, setName] = useState('');
-    const updateName = (e: any) => setName(e.target.value);
-    const updateResultText = (result: string) => setResultText(result);
+    const [sprite, setSprite] = useState<string>('');
+    const [isFloating, setIsFloating] = useState(true);
+    const [showHint, setShowHint] = useState(true);
 
-    function greet() {
-        Greet(name).then(updateResultText);
-    }
+    useEffect(() => {
+        let isMounted = true;
+
+        WindowSetAlwaysOnTop(true);
+
+        PetSprite()
+            .then((data) => {
+                if (isMounted) {
+                    setSprite(data);
+                }
+            })
+            .catch((err) => console.error('Pet sprite failed to load', err));
+
+        const hintTimeout = window.setTimeout(() => setShowHint(false), 6000);
+
+        return () => {
+            isMounted = false;
+            window.clearTimeout(hintTimeout);
+        };
+    }, []);
+
+    const petClassName = useMemo(
+        () => `pet-image${isFloating ? ' pet-image--floating' : ''}`,
+        [isFloating],
+    );
+
+    const toggleFloating = () => setIsFloating((prev) => !prev);
 
     return (
-        <div id="App">
-            <img src={logo} id="logo" alt="logo"/>
-            <div id="result" className="result">{resultText}</div>
-            <div id="input" className="input-box">
-                <input id="name" className="input" onChange={updateName} autoComplete="off" name="input" type="text"/>
-                <button className="btn" onClick={greet}>Greet</button>
+        <div className="app-shell" style={dragStyle}>
+            <div className="pet-container" style={dragStyle}>
+                {sprite && (
+                    <img
+                        className={petClassName}
+                        src={sprite}
+                        alt="Desktop pet"
+                        draggable={false}
+                        onDoubleClick={toggleFloating}
+                        style={noDragStyle}
+                    />
+                )}
+                <div className="pet-shadow" style={noDragStyle}/>
             </div>
+
+            {showHint && (
+                <div className="pet-hint" style={noDragStyle}>
+                    Drag me anywhere · Double-click to pause
+                </div>
+            )}
         </div>
-    )
+    );
 }
 
-export default App
+export default App;
