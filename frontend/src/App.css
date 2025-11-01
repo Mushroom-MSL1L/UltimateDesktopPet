@@ -1,59 +1,94 @@
-#app {
+.app-shell {
+    width: 100vw;
     height: 100vh;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 16px;
+    box-sizing: border-box;
+    user-select: none;
+    backdrop-filter: blur(0px);
+    background: transparent;
 }
 
-#logo {
-    display: block;
-    width: 50%;
-    height: 50%;
-    margin: auto;
-    padding: 10% 0 0;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
+.pet-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 26px 32px;
+    cursor: grab;
 }
 
-.result {
-    height: 20px;
-    line-height: 20px;
-    margin: 1.5rem auto;
+.pet-container:active {
+    cursor: grabbing;
 }
 
-.input-box .btn {
-    width: 60px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 3px;
-    border: none;
-    margin: 0 0 0 20px;
-    padding: 0 8px;
-    cursor: pointer;
+.pet-image {
+    width: clamp(140px, 60vw, 220px);
+    max-height: 220px;
+    pointer-events: none;
+    filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.4));
+    transform-origin: center bottom;
 }
 
-.input-box .btn:hover {
-    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-    color: #333333;
+.pet-image--floating {
+    animation: pet-float 3.6s ease-in-out infinite;
 }
 
-.input-box .input {
-    border: none;
-    border-radius: 3px;
-    outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    -webkit-font-smoothing: antialiased;
+@keyframes pet-float {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+    100% {
+        transform: translateY(0);
+    }
 }
 
-.input-box .input:hover {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
+.pet-shadow {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 18px;
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 70%);
+    opacity: 0.4;
+    filter: blur(6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
 }
 
-.input-box .input:focus {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
+.pet-container:active .pet-shadow {
+    opacity: 0.55;
+    transform: translateX(-50%) scale(0.95);
+}
+
+.pet-hint {
+    pointer-events: auto;
+    margin-top: 4px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(26, 26, 26, 0.55);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    animation: pet-hint-in 260ms ease-out forwards;
+}
+
+@keyframes pet-hint-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
