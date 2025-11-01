@@ -1,33 +1,36 @@
 package main
 
 import (
-	"UltimateDesktopPet/internal/configLogics"
-	"UltimateDesktopPet/internal/database"
-	"UltimateDesktopPet/internal/synchronization"
-	"UltimateDesktopPet/pkg/configs"
+	"embed"
+
+	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/options"
+	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 )
 
-//	@title			Ultimate Desktop Pet API
-//	@version		1.0
-//	@description	Ultimate Desktop Pet API
-
-//	@contact.name	Mushroom_MSL1L
-//	@contact.url	https://github.com/Mushroom-MSL1L
-
-//	@license.name	no license yet
-
-//	@host	localhost:8080
-//	@BasePath  /
-
-//	@tag.name	temp
-//	@tag.name	docs
+//go:embed all:frontend/dist
+var assets embed.FS
 
 func main() {
-	var myDB = database.DB{}
-	sCfg := configs.LoadConfig[configLogics.System]("./configs/system.yaml")
+	// Create an instance of the app structure
+	app := NewApp()
 
-	myDB.InitDB(sCfg.DBFile)
-	defer myDB.CloseDB()
+	// Create application with options
+	err := wails.Run(&options.App{
+		Title:  "ultimate-desktop-pet",
+		Width:  1024,
+		Height: 768,
+		AssetServer: &assetserver.Options{
+			Assets: assets,
+		},
+		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		OnStartup:        app.startup,
+		Bind: []interface{}{
+			app,
+		},
+	})
 
-	synchronization.Server(sCfg.HostAddress, sCfg.Port)
+	if err != nil {
+		println("Error:", err.Error())
+	}
 }
