@@ -9,7 +9,7 @@
     box-sizing: border-box;
     user-select: none;
     backdrop-filter: blur(0px);
-    background: transparent;
+    background: transparent !important;
 }
 
 .pet-container {
@@ -91,4 +91,15 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+html, body, #root, .app-shell, .pet-container {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.pet-image, .pet-image img {
+    background: transparent !important;
+    background-color: transparent !important;
+    display: block;
 }

@@ -2,7 +2,8 @@ html,
 body {
     height: 100%;
     margin: 0;
-    background: transparent;
+    background: transparent !important;
+    background-color: transparent !important;
     text-align: center;
     color: rgba(255, 255, 255, 0.9);
 }
@@ -25,4 +26,5 @@ body {
 #root {
     height: 100vh;
     text-align: center;
+    background: transparent !important;
 }
