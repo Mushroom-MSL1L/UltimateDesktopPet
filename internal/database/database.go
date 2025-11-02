@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"time"
 
 	pkg "UltimateDesktopPet/pkg/file"
@@ -15,11 +16,12 @@ type DB struct {
 	dbFile string
 }
 
-func (d *DB) InitDB(dbFile string) {
+func (d *DB) InitDB(c context.Context, dbFile string) {
 	pp.Info(pp.DB, "DB initializing")
 	d.setdbFile(dbFile)
 	d.connectDB()
 	d.loadSchemas()
+	d.closeDB(c)
 	pp.Assert(pp.DB, "DB working")
 }
 
@@ -50,16 +52,21 @@ func (d *DB) GetDB() *gorm.DB {
 	return d.db
 }
 
-func (d *DB) CloseDB() {
-	if d.db == nil {
-		pp.Info(pp.DB, "DB already closed")
-		return
-	}
-	sqlDB, err := d.db.DB()
-	if err != nil {
-		pp.Fatal(pp.DB, "failed to get sql DB: %v", err)
-		return
-	}
-	sqlDB.Close()
-	pp.Assert(pp.DB, "DB closed")
+func (d *DB) closeDB(c context.Context) {
+	go func() {
+		select {
+		case <-c.Done():
+			if d.db == nil {
+				pp.Info(pp.DB, "DB already closed")
+				return
+			}
+			sqlDB, err := d.db.DB()
+			if err != nil {
+				pp.Fatal(pp.DB, "failed to get sql DB: %v", err)
+				return
+			}
+			sqlDB.Close()
+			pp.Assert(pp.DB, "DB closed")
+		}
+	}()
 }
