@@ -9,6 +9,8 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/linux"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
@@ -30,6 +32,7 @@ func main() {
 		DisableResize: true,
 		Frameless:     true,
 		AlwaysOnTop:   true,
+
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
@@ -41,6 +44,22 @@ func main() {
 			WebviewIsTransparent:              true,
 			WindowIsTranslucent:               true,
 			DisableFramelessWindowDecorations: true,
+		},
+		Mac: &mac.Options{
+			TitleBar: &mac.TitleBar{
+				TitlebarAppearsTransparent: true,
+				HideTitle:                  true,
+				HideTitleBar:               true,
+				FullSizeContent:            false,
+				UseToolbar:                 false,
+				HideToolbarSeparator:       true,
+			},
+			WebviewIsTransparent: true,
+			WindowIsTranslucent:  false,
+		},
+		Linux: &linux.Options{},
+		Debug: options.Debug{
+			OpenInspectorOnStartup: false,
 		},
 		Bind: []interface{}{
 			myapp,
