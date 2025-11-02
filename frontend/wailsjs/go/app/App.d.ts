@@ -4,3 +4,5 @@
 export function Greet(arg1:string):Promise<string>;
 
 export function PetSprite():Promise<string>;
+
+export function PetSpriteBy(arg1:string):Promise<string>;

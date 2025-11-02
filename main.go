@@ -3,6 +3,9 @@ package main
 import (
 	"embed"
 
+	"UltimateDesktopPet/internal/app"
+	_ "UltimateDesktopPet/internal/app"
+
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -12,9 +15,12 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed assets/petImages/*/*
+var petAssets embed.FS
+
 func main() {
 	// Create an instance of the app structure
-	app := NewApp()
+	myapp := app.NewApp(petAssets)
 
 	// Create application with options
 	err := wails.Run(&options.App{
@@ -30,14 +36,14 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0},
 		CSSDragProperty:  "--wails-draggable",
 		CSSDragValue:     "drag",
-		OnStartup:        app.startup,
+		OnStartup:        myapp.Startup,
 		Windows: &windows.Options{
 			WebviewIsTransparent:              true,
 			WindowIsTranslucent:               true,
 			DisableFramelessWindowDecorations: true,
 		},
 		Bind: []interface{}{
-			app,
+			myapp,
 		},
 	})
 
