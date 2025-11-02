@@ -25,6 +25,7 @@ const (
 	Synchronization Tag = "Sync 🛜"
 	System          Tag = "Sys  ⚙️ "
 	File            Tag = "File 📁"
+	App             Tag = "App  📦"
 )
 
 var (
