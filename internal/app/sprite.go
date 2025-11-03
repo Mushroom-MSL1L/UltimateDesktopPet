@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	_ "UltimateDesktopPet/internal/pet"
-	_ "UltimateDesktopPet/internal/system"
 )
 
 var embeddedPetAssets embed.FS

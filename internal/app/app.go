@@ -9,7 +9,6 @@ import (
 	"UltimateDesktopPet/internal/database"
 	"UltimateDesktopPet/internal/pet"
 	_ "UltimateDesktopPet/internal/pet"
-	_ "UltimateDesktopPet/internal/system"
 
 	"UltimateDesktopPet/pkg/configs"
 	pp "UltimateDesktopPet/pkg/print"
