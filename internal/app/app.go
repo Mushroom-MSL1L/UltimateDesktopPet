@@ -18,6 +18,7 @@ import (
 type App struct {
 	ctx     context.Context
 	myDB    database.DB
+	petMeta *pet.PetMeta
 }
 
 func NewApp(assets embed.FS) *App {
@@ -34,11 +35,12 @@ func (a *App) Startup(parentCtx context.Context) {
 	a.myDB.InitDB(a.ctx, sCfg.DBFile)
 
 	/* app services */
-	go pet.Service(a.ctx, myDB.GetDB())
+	go a.petMeta.Service(a.ctx, a.myDB.GetDB())
 }
 
 func (a *App) Shutdown(parentCtx context.Context) {
 	pp.Assert(pp.App, "shutdown")
+	a.petMeta.Shutdown(a.myDB.GetDB())
 	a.myDB.CloseDB()
 }
 
