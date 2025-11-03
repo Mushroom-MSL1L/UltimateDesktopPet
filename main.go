@@ -40,6 +40,7 @@ func main() {
 		CSSDragProperty:  "--wails-draggable",
 		CSSDragValue:     "drag",
 		OnStartup:        myapp.Startup,
+		OnShutdown:       myapp.Shutdown,
 		Windows: &windows.Options{
 			WebviewIsTransparent:              true,
 			WindowIsTranslucent:               true,

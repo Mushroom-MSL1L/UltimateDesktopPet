@@ -25,18 +25,9 @@ func NewApp(assets embed.FS) *App {
 	return &App{}
 }
 
-func (a *App) setContextWithCancelAndSignalHandler(c context.Context) context.Context {
-	if c == nil {
-		c = context.Background()
-	}
-	ctx, _ := context.WithCancel(c)
-	a.ctx = ctx
-	return a.ctx
-}
-
-func (a *App) Startup(ctx context.Context) {
+func (a *App) Startup(parentCtx context.Context) {
 	/* app initialization */
-	a.setContextWithCancelAndSignalHandler(ctx)
+	a.ctx = parentCtx
 	sCfg := configs.LoadConfig("./configs/system.yaml", configLogics.System{})
 
 	var myDB = database.DB{}
@@ -44,6 +35,10 @@ func (a *App) Startup(ctx context.Context) {
 
 	/* app services */
 	go pet.Service(a.ctx, myDB.GetDB())
+}
+
+func (a *App) Shutdown(parentCtx context.Context) {
+	pp.Assert(pp.App, "shutdown")
 }
 
 func (a *App) Greet(name string) string {
