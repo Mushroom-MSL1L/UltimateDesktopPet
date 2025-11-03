@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"time"
 
 	pkg "UltimateDesktopPet/pkg/file"
@@ -15,7 +16,7 @@ type DB struct {
 	dbFile string
 }
 
-func (d *DB) InitDB(dbFile string) {
+func (d *DB) InitDB(c context.Context, dbFile string) {
 	pp.Info(pp.DB, "DB initializing")
 	d.setdbFile(dbFile)
 	d.connectDB()

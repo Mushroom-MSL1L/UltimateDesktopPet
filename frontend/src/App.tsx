@@ -1,6 +1,6 @@
 import {CSSProperties, useEffect, useMemo, useState} from 'react';
 import './App.css';
-import {PetSprite} from "../wailsjs/go/main/App";
+import {PetSprite} from "../wailsjs/go/app/App";
 import {WindowSetAlwaysOnTop} from "../wailsjs/runtime/runtime";
 
 const dragStyle: CSSProperties = {
@@ -18,6 +18,9 @@ function App() {
 
     useEffect(() => {
         let isMounted = true;
+
+        document.body.style.background = "transparent";
+        console.log("body background:", getComputedStyle(document.body).backgroundColor);
 
         WindowSetAlwaysOnTop(true);
 

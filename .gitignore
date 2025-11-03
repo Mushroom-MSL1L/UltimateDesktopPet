@@ -1,3 +1,15 @@
+# frontend 
 build/bin
 node_modules
 frontend/dist
+
+# system 
+configs/*.yaml
+configs/*.yml
+assets/db/*.db
+
+# normal local files 
+.DS_Store
+.vscode/*
+*.log
+*.local

@@ -1,3 +1,11 @@
+/* ===============================
+ *  Base Layout
+ * =============================== */
+html, body, #root, .app-shell, .pet-container {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
 .app-shell {
     width: 100vw;
     height: 100vh;
@@ -9,9 +17,26 @@
     box-sizing: border-box;
     user-select: none;
     backdrop-filter: blur(0px);
-    background: transparent;
+    position: fixed;
+    inset: 0;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    background: transparent !important;
+    backface-visibility: hidden;
 }
 
+/* ===============================
+ *  Pet Hint
+ * =============================== */
+.pet-hint {
+    display: none !important;
+    opacity: 0 !important;
+    animation: none !important;
+}
+
+/* ===============================
+ *  Pet Container
+ * =============================== */
 .pet-container {
     position: relative;
     display: flex;
@@ -19,76 +44,61 @@
     justify-content: center;
     padding: 16px 26px 32px;
     cursor: grab;
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    transition: none !important;
 }
 
 .pet-container:active {
     cursor: grabbing;
+    transform: none !important;
+    filter: none !important;
 }
 
+/* ===============================
+ *  Pet Image
+ * =============================== */
 .pet-image {
     width: clamp(140px, 60vw, 220px);
     max-height: 220px;
     pointer-events: none;
-    filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.4));
     transform-origin: center bottom;
+    display: block;
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* ===============================
+ *  Rendering Overrides
+ *  (ensure pixel sytle, no animation, no shadow)
+ * =============================== */
+.pet-image,
+.pet-image img {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    -webkit-image-rendering: pixelated;
+    -moz-image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+    transform: none !important;
+    backface-visibility: hidden;
+    will-change: auto;
+    animation: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 .pet-image--floating {
-    animation: pet-float 3.6s ease-in-out infinite;
-}
-
-@keyframes pet-float {
-    0% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
-    100% {
-        transform: translateY(0);
-    }
+    animation: none !important;
+    transform: none !important;
 }
 
 .pet-shadow {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    height: 18px;
-    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 70%);
-    opacity: 0.4;
-    filter: blur(6px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    pointer-events: none;
+    display: none !important;
 }
 
-.pet-container:active .pet-shadow {
-    opacity: 0.55;
-    transform: translateX(-50%) scale(0.95);
-}
-
-.pet-hint {
-    pointer-events: auto;
-    margin-top: 4px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    background: rgba(26, 26, 26, 0.55);
-    color: rgba(255, 255, 255, 0.88);
-    font-size: 0.75rem;
-    letter-spacing: 0.02em;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-    animation: pet-hint-in 260ms ease-out forwards;
-}
-
-@keyframes pet-hint-in {
-    from {
-        opacity: 0;
-        transform: translateY(6px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.pet-container,
+.pet-container * {
+    animation: none !important;
+    transition: none !important;
 }
