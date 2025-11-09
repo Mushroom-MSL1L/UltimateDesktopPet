@@ -13,3 +13,7 @@ assets/db/*.db
 .vscode/*
 *.log
 *.local
+
+# must include 
+!assets/db/activities.db
+!assets/db/items.db
