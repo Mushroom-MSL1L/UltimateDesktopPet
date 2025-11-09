@@ -50,14 +50,14 @@ func (a *App) Startup(parentCtx context.Context) {
 func (a *App) useConfigurations(c context.Context, configPath string) {
 	sCfg := configs.LoadConfig(configPath, configLogics.System{})
 
-	a.petMeta.DB.InitDB(c, sCfg.DBFile, database.Pets)
-	a.petMeta.ImagePath = sCfg.PetImageDir
+	a.petMeta.DB.InitDB(c, sCfg.UDPDBDir, database.Pets)
+	a.petMeta.ImagePath = sCfg.PetImageFolder
 
-	a.itemsMeta.DB.InitDB(c, sCfg.ItemsDBFile, database.Items)
-	a.itemsMeta.ImagePath = sCfg.ItemsDir
+	a.itemsMeta.DB.InitDB(c, sCfg.ItemsDBDir, database.Items)
+	a.itemsMeta.ImagePath = sCfg.ItemsImageFolder
 
-	a.activityMeta.DB.InitDB(c, sCfg.ActivitiesDBFile, database.Activities)
-	a.activityMeta.ImagePath = sCfg.ActivitiesDir
+	a.activityMeta.DB.InitDB(c, sCfg.ActivitiesDBDir, database.Activities)
+	a.activityMeta.ImagePath = sCfg.ActivitiesImageFolder
 }
 
 func (a *App) Shutdown(parentCtx context.Context) {
