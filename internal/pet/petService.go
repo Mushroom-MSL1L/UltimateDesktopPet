@@ -16,7 +16,7 @@ type PetMeta struct {
 
 func init() {
 	p := newPetController(nil)
-	database.RegisterSchema(p)
+	database.RegisterSchema(database.Pets, p)
 	pp.Assert(pp.Pet, "pet init complete")
 }
 
