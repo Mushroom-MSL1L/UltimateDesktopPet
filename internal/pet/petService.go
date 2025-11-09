@@ -11,6 +11,8 @@ import (
 
 type PetMeta struct {
 	Controller *database.BaseController[Pet]
+	ImagePath  string
+	DB         database.DB
 	Pet        *Pet
 }
 
@@ -24,27 +26,30 @@ func newPetController(model **Pet) *database.BaseController[Pet] {
 	return &database.BaseController[Pet]{Model: model}
 }
 
-func (p *PetMeta) Service(c context.Context, db *gorm.DB) {
-	p.petServiceInit(db)
+func (p *PetMeta) Service(c context.Context) {
+	p.petServiceInit()
 
 	go p.Pet.periodicallyUpdateStates(c)
 	go p.Pet.periodicallyPrintStatus(c)
 }
 
-func (p *PetMeta) Shutdown(db *gorm.DB) {
+func (p *PetMeta) Shutdown() {
+	db := p.DB.GetDB()
 	err := p.Controller.Create(db)
 	if err != nil {
 		pp.Warn(pp.Pet, "failed to save pet state: %v", err)
 	} else {
 		pp.Info(pp.Pet, "pet state saved successfully")
 	}
+	p.DB.CloseDB()
 	pp.Assert(pp.Pet, "pet service stopped")
 }
 
-func (p *PetMeta) petServiceInit(db *gorm.DB) {
+func (p *PetMeta) petServiceInit() {
 	var err error
 	p.Pet = &Pet{}
 	p.Controller = newPetController(&p.Pet)
+	db := p.DB.GetDB()
 
 	p.Pet, err = p.Controller.ReadFirst(db)
 	if err != nil {
