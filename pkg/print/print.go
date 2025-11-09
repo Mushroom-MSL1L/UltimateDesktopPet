@@ -26,6 +26,8 @@ const (
 	System          Tag = "Sys  ⚙️ "
 	File            Tag = "File 📁"
 	App             Tag = "App  📦"
+	Items           Tag = "Item 🧸"
+	Activities      Tag = "Act  🎯"
 )
 
 var (
