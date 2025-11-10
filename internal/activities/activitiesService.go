@@ -14,7 +14,7 @@ type ActivityMeta struct {
 
 func init() {
 	a := newActivityController(nil)
-	database.RegisterSchema(database.Activities, a)
+	database.RegisterSchema(database.Images, a)
 	pp.Assert(pp.Activities, "Activities init complete")
 }
 

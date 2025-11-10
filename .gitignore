@@ -15,5 +15,4 @@ assets/db/*.db
 *.local
 
 # must include 
-!assets/db/activities.db
-!assets/db/items.db
+!assets/db/images.db

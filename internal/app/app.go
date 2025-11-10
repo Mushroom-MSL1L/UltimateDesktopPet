@@ -39,24 +39,28 @@ func NewApp(assets embed.FS) *App {
 func (a *App) Startup(parentCtx context.Context) {
 	/* app initialization */
 	a.ctx = parentCtx
-	a.useConfigurations(a.ctx, "./configs/system.yaml")
+	a.useConfigurations("./configs/system.yaml")
 	pp.Assert(pp.App, "startup")
 
 	/* app services */
 	go a.petMeta.Service(a.ctx)
-
+	go func() {
+		<-time.After(10 * time.Second)
+		pp.Assert(pp.App, "after 10 seconds")
+		runtime.Quit(a.ctx)
+	}()
 }
 
-func (a *App) useConfigurations(c context.Context, configPath string) {
+func (a *App) useConfigurations(configPath string) {
 	sCfg := configs.LoadConfig(configPath, configLogics.System{})
 
-	a.petMeta.DB.InitDB(c, sCfg.UDPDBDir, database.Pets)
+	a.petMeta.DB.InitDB(a.ctx, sCfg.UDPDBDir, database.Pets)
 	a.petMeta.ImagePath = sCfg.PetImageFolder
 
-	a.itemsMeta.DB.InitDB(c, sCfg.ItemsDBDir, database.Items)
+	a.itemsMeta.DB.InitDB(a.ctx, sCfg.ImageDBDir, database.Images)
 	a.itemsMeta.ImagePath = sCfg.ItemsImageFolder
 
-	a.activityMeta.DB.InitDB(c, sCfg.ActivitiesDBDir, database.Activities)
+	a.activityMeta.DB.InitDB(a.ctx, sCfg.ImageDBDir, database.Images)
 	a.activityMeta.ImagePath = sCfg.ActivitiesImageFolder
 }
 
