@@ -51,8 +51,8 @@ Wails binding                       |
 
 ## image management 
 ### Pet image management 
-* Configuration need to specify what path under `./assets/petImages` need to load as animation. 
-* If there's anything that expected to exist but not in user pet image path, use the default ones. 
+* Users can locally load their own image resources as animations by configuring the paths under `./assets/petImages`.
+* However, if any required animation is missing, the system will automatically fall back to the default animations.
 ```
 // in configuration 
 petImageFolder: "myPetResource" // it means use the path of ./assets/petImages/myPetResource/*
@@ -88,15 +88,13 @@ petImageFolder: "myPetResource" // it means use the path of ./assets/petImages/m
 ```
 
 ### Items / Activity image management 
-* Configuration need to specify what path under `./assets/food` need to load as animation. 
-* If there's anything that expected to exist but not in user pet image path, use the default ones. 
-* Attributes and exact path of one food image should be specified in the database. 
+* Users can locally load their own image resources as animations by configuring the paths under `./assets/activities` and `./assets/items`, along with the corresponding attributes defined in `./assets/db/images.db`.
+* However, if any required animation is missing, the system will automatically fall back to the default animations.
 ```
 // in configuration 
-itemsDBDir:            myItemDB.db          // it means use the path of ./assets/db/myItemDB.db 
-itemsImageFolder:      myItemResource       // it means use the path of ./assets/items/myFoodResource/*
-activitiesDBDir:       myActivityDB.db      // it means use the path of ./assets/db/myActivityDB.db
-activitiesImageFolder: myActivityResource   // it means use the path of ./assets/activities/myActivityResource/*
+imageDBDir:            ./assets/db/images.db                     // it means use the db ./assets/db/images.db
+itemsImageFolder:      ./assets/items/myItemResource             // it means use the path of ./assets/items/myItemResource/*
+activitiesImageFolder: ./assets/activities/myActivityResource    // it means use the path of ./assets/activities/myActivityResource/*
 
 
 // path structure 
