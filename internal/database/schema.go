@@ -7,7 +7,7 @@ import (
 type DBID int
 
 const (
-	Images DBID = iota
+	StaticAssets DBID = iota
 	Pets
 )
 

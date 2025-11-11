@@ -57,10 +57,8 @@ func (a *App) useConfigurations(configPath string) {
 	a.petMeta.DB.InitDB(a.ctx, sCfg.UDPDBDir, database.Pets)
 	a.petMeta.ImagePath = sCfg.PetImageFolder
 
-	a.itemsMeta.DB.InitDB(a.ctx, sCfg.ImageDBDir, database.Images)
+	a.itemsMeta.DB.InitDB(a.ctx, sCfg.StaticAssetsDBDir, database.StaticAssets)
 	a.itemsMeta.ImagePath = sCfg.ItemsImageFolder
-
-	a.activityMeta.DB.InitDB(a.ctx, sCfg.ImageDBDir, database.Images)
 	a.activityMeta.ImagePath = sCfg.ActivitiesImageFolder
 }
 

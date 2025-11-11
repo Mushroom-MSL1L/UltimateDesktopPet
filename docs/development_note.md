@@ -92,7 +92,7 @@ petImageFolder: "myPetResource" // it means use the path of ./assets/petImages/m
 * However, if any required animation is missing, the system will automatically fall back to the default animations.
 ```
 // in configuration 
-imageDBDir:            ./assets/db/images.db                     // it means use the db ./assets/db/images.db
+staticAssetsDBDir:     ./assets/db/my_static_assets.db           // it means use the db ./assets/db/my_static_assets.db
 itemsImageFolder:      ./assets/items/myItemResource             // it means use the path of ./assets/items/myItemResource/*
 activitiesImageFolder: ./assets/activities/myActivityResource    // it means use the path of ./assets/activities/myActivityResource/*
 

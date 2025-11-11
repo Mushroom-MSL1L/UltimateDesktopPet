@@ -14,7 +14,7 @@ type ItemsMeta struct {
 
 func init() {
 	i := newItemsController(nil)
-	database.RegisterSchema(database.Images, i)
+	database.RegisterSchema(database.StaticAssets, i)
 	pp.Assert(pp.Items, "items init complete")
 }
 
