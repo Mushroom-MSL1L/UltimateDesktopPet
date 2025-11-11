@@ -1,1 +1,5 @@
-dbfile: "./assets/db/udp.db"
+udpDBDir:              ./assets/db/udp.db
+staticAssetsDBDir:     ./assets/db/static_assets.db
+petImageFolder:        ./assets/petImages/default/
+itemsImageFolder:      ./assets/items/default/
+activitiesImageFolder: ./assets/activities/default/

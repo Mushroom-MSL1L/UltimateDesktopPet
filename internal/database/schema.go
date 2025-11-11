@@ -4,18 +4,25 @@ import (
 	"gorm.io/gorm"
 )
 
+type DBID int
+
+const (
+	StaticAssets DBID = iota
+	Pets
+)
+
 type Schema interface {
 	InitTable(db *gorm.DB)
 }
 
-var registerSchemas []Schema
+var registerSchemas = make(map[DBID][]Schema)
 
-func RegisterSchema(s Schema) {
-	registerSchemas = append(registerSchemas, s)
+func RegisterSchema(id DBID, s Schema) {
+	registerSchemas[id] = append(registerSchemas[id], s)
 }
 
-func (d *DB) loadSchemas() {
-	for _, schema := range registerSchemas {
+func (d *DB) loadSchemas(id DBID) {
+	for _, schema := range registerSchemas[id] {
 		schema.InitTable(d.db)
 	}
 }

@@ -16,11 +16,11 @@ type DB struct {
 	dbFile string
 }
 
-func (d *DB) InitDB(c context.Context, dbFile string) {
+func (d *DB) InitDB(c context.Context, dbFile string, id DBID) {
 	pp.Info(pp.DB, "DB initializing")
 	d.setdbFile(dbFile)
 	d.connectDB()
-	d.loadSchemas()
+	d.loadSchemas(id)
 	pp.Assert(pp.DB, "DB working")
 }
 

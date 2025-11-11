@@ -2,6 +2,7 @@
 build/bin
 node_modules
 frontend/dist
+frontend/*.mjs
 
 # system 
 configs/*.yaml
@@ -13,3 +14,6 @@ assets/db/*.db
 .vscode/*
 *.log
 *.local
+
+# must include 
+!assets/db/images.db
