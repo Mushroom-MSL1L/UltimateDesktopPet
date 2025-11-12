@@ -14,6 +14,8 @@ import (
 
 	"UltimateDesktopPet/pkg/configs"
 	pp "UltimateDesktopPet/pkg/print"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type App struct {
@@ -62,6 +64,11 @@ func (a *App) Shutdown(parentCtx context.Context) {
 	a.itemsMeta.Shutdown()
 	a.activityMeta.Shutdown()
 	pp.Assert(pp.App, "app shutdown complete")
+}
+
+func (a *App) Quit() {
+	pp.Info(pp.App, "app quitting")
+	runtime.Quit(a.ctx)
 }
 
 func (a *App) PetFrames() ([]string, error) {
