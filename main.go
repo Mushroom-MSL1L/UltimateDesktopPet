@@ -16,18 +16,16 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
-//go:embed all:frontend/dist
-var assets embed.FS
+const configPath = "./configs/system.yaml"
 
-//go:embed assets/petImages/*/*
-var petAssets embed.FS
+//go:embed all:frontend/dist
+var frontendBuild embed.FS
 
 func main() {
 	// Create an instance of the app structure
 	windowService := windowservice.NewWindowService()
-	myapp := app.NewApp(petAssets)
+	myapp := app.NewApp(configPath)
 
-	// Create application with options
 	err := wails.Run(&options.App{
 		Title:         "Ultimate Desktop Pet",
 		Width:         150,
@@ -37,7 +35,7 @@ func main() {
 		AlwaysOnTop:   true,
 
 		AssetServer: &assetserver.Options{
-			Assets: assets,
+			Assets: frontendBuild,
 		},
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0},
 		CSSDragProperty:  "--wails-draggable",

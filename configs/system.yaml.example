@@ -1,5 +1,5 @@
 udpDBDir:              ./assets/db/udp.db
 staticAssetsDBDir:     ./assets/db/static_assets.db
-petImageFolder:        ./assets/petImages/default/
+petImageFolder:        default
 itemsImageFolder:      ./assets/items/default/
 activitiesImageFolder: ./assets/activities/default/
