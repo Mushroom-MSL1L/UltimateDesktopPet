@@ -21,6 +21,9 @@ const configPath = "./configs/system.yaml"
 //go:embed all:frontend/dist
 var frontendBuild embed.FS
 
+//go:embed build/appicon.png
+var icon []byte
+
 func main() {
 	// Create an instance of the app structure
 	windowService := windowservice.NewWindowService()
@@ -51,6 +54,10 @@ func main() {
 			DisableFramelessWindowDecorations: true,
 		},
 		Mac: &mac.Options{
+			About: &mac.AboutInfo{
+				Title: "Ultimate Desktop Pet",
+				Icon:  icon,
+			},
 			TitleBar: &mac.TitleBar{
 				TitlebarAppearsTransparent: true,
 				HideTitle:                  true,
@@ -62,7 +69,10 @@ func main() {
 			WebviewIsTransparent: true,
 			WindowIsTranslucent:  false,
 		},
-		Linux: &linux.Options{},
+		Linux: &linux.Options{
+			Icon:        icon,
+			ProgramName: "Ultimate Desktop Pet",
+		},
 		Debug: options.Debug{
 			OpenInspectorOnStartup: false,
 		},
