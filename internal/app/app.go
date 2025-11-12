@@ -2,21 +2,18 @@ package app
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"strings"
 
-	items "UltimateDesktopPet/internal/Items"
 	"UltimateDesktopPet/internal/activities"
 	"UltimateDesktopPet/internal/configLogics"
 	"UltimateDesktopPet/internal/database"
+	"UltimateDesktopPet/internal/items"
 	"UltimateDesktopPet/internal/pet"
 	_ "UltimateDesktopPet/internal/pet"
 
 	"UltimateDesktopPet/pkg/configs"
 	pp "UltimateDesktopPet/pkg/print"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type App struct {
@@ -24,30 +21,32 @@ type App struct {
 	petMeta      *pet.PetMeta
 	itemsMeta    *items.ItemsMeta
 	activityMeta *activities.ActivityMeta
+	configs      *configLogics.System
 }
 
-func NewApp(assets embed.FS) *App {
-	embeddedPetAssets = assets
-	loadDefaultSprite()
-	return &App{
+func NewApp(configPath string) *App {
+	app := &App{
 		petMeta:      &pet.PetMeta{},
 		itemsMeta:    &items.ItemsMeta{},
 		activityMeta: &activities.ActivityMeta{},
 	}
+	app.configs = configs.LoadConfig(configPath, &configLogics.System{})
+
+	return app
 }
 
 func (a *App) Startup(parentCtx context.Context) {
 	/* app initialization */
 	a.ctx = parentCtx
-	a.useConfigurations("./configs/system.yaml")
+	a.useConfigurations()
 	pp.Assert(pp.App, "startup")
 
 	/* app services */
 	go a.petMeta.Service(a.ctx)
 }
 
-func (a *App) useConfigurations(configPath string) {
-	sCfg := configs.LoadConfig(configPath, configLogics.System{})
+func (a *App) useConfigurations() {
+	sCfg := a.configs
 
 	a.petMeta.DB.InitDB(a.ctx, sCfg.UDPDBDir, database.Pets)
 	a.petMeta.ImagePath = sCfg.PetImageFolder
@@ -65,29 +64,22 @@ func (a *App) Shutdown(parentCtx context.Context) {
 	pp.Assert(pp.App, "app shutdown complete")
 }
 
-func (a *App) Quit() {
-	pp.Info(pp.App, "Quit requested")
-	runtime.Quit(a.ctx)
-}
-
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
-}
-
-func (a *App) PetSprite() string {
-	if petSpriteDataURI == "" {
-		pp.Fatal(pp.App, "PetSprite: no default sprite loaded")
-	}
-	return petSpriteDataURI
-}
-
-func (a *App) PetSpriteBy(path string) (string, error) {
-	data, err := loadSpriteByName(path)
+func (a *App) PetFrames() ([]string, error) {
+	frames, err := loadDefaultFrames(a.configs.PetImageFolder)
 	if err != nil {
-		pp.Fatal(pp.App, "PetSpriteBy: failed to load sprite %s: %v", path, err)
-		return "", err
+		pp.Fatal(pp.App, "PetFrames: failed to load default frames: %v", err)
+		return nil, err
 	}
-	return data, nil
+	return frames, nil
+}
+
+func (a *App) PetFramesBy(animationType string) ([]string, error) {
+	frames, err := loadFramesFromDir(a.configs.PetImageFolder, animationType)
+	if err != nil {
+		pp.Fatal(pp.App, "PetFramesBy: failed to load frames for animation type %s: %v", animationType, err)
+		return nil, err
+	}
+	return frames, nil
 }
 
 // ChatWithPet is a stub that will later become the real conversation handler.
