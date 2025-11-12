@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"embed"
 
 	"UltimateDesktopPet/internal/app"
 	_ "UltimateDesktopPet/internal/app"
+	windowservice "UltimateDesktopPet/internal/window"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -22,6 +24,7 @@ var petAssets embed.FS
 
 func main() {
 	// Create an instance of the app structure
+	windowService := windowservice.NewWindowService()
 	myapp := app.NewApp(petAssets)
 
 	// Create application with options
@@ -39,8 +42,11 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0},
 		CSSDragProperty:  "--wails-draggable",
 		CSSDragValue:     "drag",
-		OnStartup:        myapp.Startup,
-		OnShutdown:       myapp.Shutdown,
+		OnStartup: func(ctx context.Context) {
+			windowService.SetContext(ctx)
+			myapp.Startup(ctx)
+		},
+		OnShutdown: myapp.Shutdown,
 		Windows: &windows.Options{
 			WebviewIsTransparent:              true,
 			WindowIsTranslucent:               true,
@@ -64,6 +70,7 @@ func main() {
 		},
 		Bind: []interface{}{
 			myapp,
+			windowService,
 		},
 	})
 

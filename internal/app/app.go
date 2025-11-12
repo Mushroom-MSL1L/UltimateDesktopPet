@@ -70,6 +70,11 @@ func (a *App) Shutdown(parentCtx context.Context) {
 	pp.Assert(pp.App, "app shutdown complete")
 }
 
+func (a *App) Quit() {
+	pp.Info(pp.App, "Quit requested")
+	runtime.Quit(a.ctx)
+}
+
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }

@@ -13,3 +13,11 @@ export function PetSprite() {
 export function PetSpriteBy(arg1) {
   return window['go']['app']['App']['PetSpriteBy'](arg1);
 }
+
+export function Quit() {
+  return window['go']['app']['App']['Quit']();
+}
+
+export function Startup(arg1) {
+  return window['go']['app']['App']['Startup'](arg1);
+}
