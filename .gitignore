@@ -18,4 +18,4 @@ assets/db/*.db
 *.local
 
 # must include 
-!assets/db/images.db
+!assets/db/static_assets.db
