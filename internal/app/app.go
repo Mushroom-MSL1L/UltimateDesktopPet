@@ -4,7 +4,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"time"
+	"strings"
 
 	items "UltimateDesktopPet/internal/Items"
 	"UltimateDesktopPet/internal/activities"
@@ -44,11 +44,6 @@ func (a *App) Startup(parentCtx context.Context) {
 
 	/* app services */
 	go a.petMeta.Service(a.ctx)
-	go func() {
-		<-time.After(10 * time.Second)
-		pp.Assert(pp.App, "after 10 seconds")
-		runtime.Quit(a.ctx)
-	}()
 }
 
 func (a *App) useConfigurations(configPath string) {
@@ -93,4 +88,14 @@ func (a *App) PetSpriteBy(path string) (string, error) {
 		return "", err
 	}
 	return data, nil
+}
+
+// ChatWithPet is a stub that will later become the real conversation handler.
+func (a *App) ChatWithPet(userInput string) string {
+	trimmed := strings.TrimSpace(userInput)
+	pp.Info(pp.App, "ChatWithPet: received message %q", trimmed)
+	if trimmed == "" {
+		return "I didn't catch that. Try saying hi!"
+	}
+	return fmt.Sprintf("I'm still learning, but I heard: %s", trimmed)
 }

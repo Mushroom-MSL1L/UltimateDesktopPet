@@ -30,8 +30,8 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:         "Ultimate Desktop Pet",
-		Width:         280,
-		Height:        280,
+		Width:         150,
+		Height:        150,
 		DisableResize: true,
 		Frameless:     true,
 		AlwaysOnTop:   true,

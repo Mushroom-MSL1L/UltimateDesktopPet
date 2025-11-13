@@ -1,7 +1,15 @@
-import { CSSProperties, useEffect, useMemo, useState } from "react";
-import { PetSprite } from "../wailsjs/go/app/App";
+import {
+  CSSProperties,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { ChatWithPet, PetSprite } from "../wailsjs/go/app/App";
+import { AdjustWindowfromLeftBottom } from "../wailsjs/go/window/WindowService";
 import { WindowSetAlwaysOnTop } from "../wailsjs/runtime/runtime";
 import { Pet } from "./components/Pet";
+import { PetDialog, type ConversationMessage } from "./components/PetDialog";
 
 const noDragStyle: CSSProperties = {
   ["--wails-draggable" as any]: "no-drag",
@@ -15,7 +23,6 @@ const baseAppShellStyle: CSSProperties = {
   flexDirection: "column",
   alignItems: "flex-start",
   justifyContent: "flex-start",
-  padding: "16px",
   boxSizing: "border-box",
   userSelect: "none",
   pointerEvents: "none",
@@ -34,10 +41,25 @@ const baseHintStyle: CSSProperties = {
   animation: "none",
 };
 
+const PET_WINDOW_DEFAULT_SIZE = { width: 150, height: 150 };
+const DIALOG_WINDOW_SIZE = { width: 900, height: 500 };
+
 function App() {
   const [sprite, setSprite] = useState<string>("");
   const [isFloating, setIsFloating] = useState(true);
-  const [showHint, setShowHint] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [conversation, setConversation] = useState<ConversationMessage[]>([
+    {
+      id: "intro",
+      role: "pet",
+      text: "Hey there! I'm still learning to chat, but I'd love to hear from you.",
+    },
+  ]);
+  const [dialogAnchor, setDialogAnchor] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
 
   const isDevMode = import.meta.env.DEV;
   const windowBackground = isDevMode
@@ -47,14 +69,6 @@ function App() {
   const appShellStyle = useMemo<CSSProperties>(
     () => ({ ...baseAppShellStyle, background: windowBackground }),
     [windowBackground]
-  );
-
-  const hintStyle = useMemo<CSSProperties>(
-    () => ({
-      ...noDragStyle,
-      ...baseHintStyle,
-    }),
-    []
   );
 
   useEffect(() => {
@@ -103,11 +117,8 @@ function App() {
       })
       .catch((err) => console.error("Pet sprite failed to load", err));
 
-    const hintTimeout = window.setTimeout(() => setShowHint(false), 6000);
-
     return () => {
       isMounted = false;
-      window.clearTimeout(hintTimeout);
 
       document.body.style.background = previousBackgrounds.bodyBackground;
       document.body.style.backgroundColor =
@@ -124,6 +135,71 @@ function App() {
   }, [windowBackground]);
 
   const toggleFloating = () => setIsFloating((prev) => !prev);
+  const handleOpenDialog = useCallback(
+    (anchor: { left: number; top: number }) => {
+      setDialogAnchor(anchor);
+      void AdjustWindowfromLeftBottom(
+        DIALOG_WINDOW_SIZE.width,
+        DIALOG_WINDOW_SIZE.height
+      );
+      setIsDialogOpen(true);
+    },
+    []
+  );
+  const handleCloseDialog = useCallback(() => {
+    setIsDialogOpen(false);
+    setDialogAnchor(null);
+    void AdjustWindowfromLeftBottom(
+      PET_WINDOW_DEFAULT_SIZE.width,
+      PET_WINDOW_DEFAULT_SIZE.height
+    );
+  }, []);
+
+  const handleSendDialogMessage = useCallback(
+    async (message: string) => {
+      if (isSendingMessage) {
+        return;
+      }
+      const trimmed = message.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      const userMessage: ConversationMessage = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        text: trimmed,
+      };
+
+      setConversation((previous) => [...previous, userMessage]);
+      setIsSendingMessage(true);
+
+      try {
+        const response = await ChatWithPet(trimmed);
+        setConversation((previous) => [
+          ...previous,
+          {
+            id: `pet-${Date.now()}`,
+            role: "pet",
+            text: response ?? "I'm thinking about what to say...",
+          },
+        ]);
+      } catch (error) {
+        console.error("ChatWithPet failed", error);
+        setConversation((previous) => [
+          ...previous,
+          {
+            id: `pet-${Date.now()}`,
+            role: "pet",
+            text: "I got distracted and missed that. Can you try again?",
+          },
+        ]);
+      } finally {
+        setIsSendingMessage(false);
+      }
+    },
+    [isSendingMessage]
+  );
 
   return (
     <div style={appShellStyle}>
@@ -131,11 +207,17 @@ function App() {
         sprite={sprite}
         isFloating={isFloating}
         onToggleFloating={toggleFloating}
+        onOpenDialog={handleOpenDialog}
       />
 
-      {showHint && (
-        <div style={hintStyle}>Drag me anywhere · Double-click to pause</div>
-      )}
+      <PetDialog
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSend={handleSendDialogMessage}
+        isBusy={isSendingMessage}
+        messages={conversation}
+        anchorPosition={dialogAnchor}
+      />
     </div>
   );
 }

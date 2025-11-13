@@ -19,27 +19,10 @@ import {
   WindowSetPosition,
 } from "../../wailsjs/runtime/runtime";
 
-const baseContainerStyle: CSSProperties = {
-  position: "relative",
-  display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "flex-start",
-  padding: "16px 26px 32px",
-  pointerEvents: "auto",
-  transform: "translateZ(0)",
-  willChange: "transform",
-  backfaceVisibility: "hidden",
-  transition: "none",
-  userSelect: "none",
-  background: "transparent",
-  backgroundColor: "transparent",
-};
-
 const baseSpriteStyle: CSSProperties = {
-  width: "220px",
-  maxWidth: "220px",
-  minWidth: "140px",
-  maxHeight: "220px",
+  width: "150px",
+  height: "150px",
+  objectFit: "contain",
   pointerEvents: "none",
   transformOrigin: "center bottom",
   display: "block",
@@ -52,18 +35,25 @@ const baseSpriteStyle: CSSProperties = {
   transition: "none",
 };
 
-const DEFAULT_WINDOW_SIZE = { width: 280, height: 280 };
-const FALLBACK_MENU_ANCHOR = { left: 32, top: 28 };
-const WINDOW_EXPAND_TARGET_SIZE = { width: 500, height: 320 }; // reserve space for side menu without clipping the pet
+const DEFAULT_WINDOW_SIZE = { width: 150, height: 150 };
+const WINDOW_EXPAND_TARGET_SIZE = { width: 400, height: 300 }; // reserve space for side menu without clipping the pet
 const MENU_OFFSET_X = 16;
+
+type AnchorPosition = { left: number; top: number };
 
 type PetProps = {
   sprite: string;
   isFloating: boolean;
   onToggleFloating: () => void;
+  onOpenDialog: (anchor: AnchorPosition) => void;
 };
 
-export function Pet({ sprite, isFloating, onToggleFloating }: PetProps) {
+export function Pet({
+  sprite,
+  isFloating,
+  onToggleFloating,
+  onOpenDialog,
+}: PetProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuAnchorPosition, setMenuAnchorPosition] = useState<{
     top: number;
@@ -85,6 +75,7 @@ export function Pet({ sprite, isFloating, onToggleFloating }: PetProps) {
   } | null>(null);
   const draggingRef = useRef(false);
   const menuWindowExpandedRef = useRef(false);
+  const menuPaperRef = useRef<HTMLDivElement | null>(null);
 
   const syncHitbox = useCallback(() => {
     if (typeof window === "undefined") {
@@ -121,22 +112,6 @@ export function Pet({ sprite, isFloating, onToggleFloating }: PetProps) {
   }, [sprite, syncHitbox]);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const handleResize = () => {
-      syncHitbox();
-    };
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [syncHitbox]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
     const handleMouseMove = (event: MouseEvent) => {
       if (!draggingRef.current) {
         return;
@@ -149,8 +124,8 @@ export function Pet({ sprite, isFloating, onToggleFloating }: PetProps) {
       const deltaX = event.screenX - dragState.startScreenX;
       const deltaY = event.screenY - dragState.startScreenY;
       WindowSetPosition(
-        Math.round(dragState.windowX + deltaX),
-        Math.round(dragState.windowY + deltaY)
+        Math.round(dragState.windowX + deltaX * window.devicePixelRatio),
+        Math.round(dragState.windowY + deltaY * window.devicePixelRatio)
       );
     };
 
@@ -174,18 +149,8 @@ export function Pet({ sprite, isFloating, onToggleFloating }: PetProps) {
     };
   }, [syncHitbox]);
 
-  const containerStyle = useMemo<CSSProperties>(
-    () => ({
-      ...baseContainerStyle,
-      cursor: isGrabbing ? "grabbing" : "grab",
-    }),
-    [isGrabbing]
-  );
-
-  type CSSVars = { [key: `--${string}`]: string };
-
   const spriteStyle = useMemo(() => {
-    const style: React.CSSProperties & CSSVars = {
+    const style: React.CSSProperties = {
       ...baseSpriteStyle,
 
       imageRendering: "pixelated",
@@ -219,6 +184,7 @@ export function Pet({ sprite, isFloating, onToggleFloating }: PetProps) {
       WINDOW_EXPAND_TARGET_SIZE.height
     );
     setIsMenuOpen(true);
+    menuWindowExpandedRef.current = true;
   };
 
   const handleCloseMenu = async () => {
@@ -236,44 +202,42 @@ export function Pet({ sprite, isFloating, onToggleFloating }: PetProps) {
     console.log("Quit called from App");
   };
 
+  const handleOpenDialogFromMenu = () => {
+    const anchor = computeMenuAnchorPosition();
+    handleCloseMenu();
+    onOpenDialog(anchor);
+  };
+
   const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
       event.stopPropagation();
       return;
     }
 
+    if (isMenuOpen) {
+      const menuNode = menuPaperRef.current;
+      if (menuNode && menuNode.contains(event.target as Node)) {
+        // Let menu items process this click.
+        return;
+      }
+      event.preventDefault();
+      void handleCloseMenu();
+      return;
+    }
+
     event.preventDefault();
-    handleCloseMenu();
     draggingRef.current = true;
     setIsGrabbing(true);
     setIsDragging(true);
-    dragStateRef.current = {
-      startScreenX: event.screenX,
-      startScreenY: event.screenY,
-      windowX: 0,
-      windowY: 0,
-      ready: false,
-    };
-
-    void WindowGetPosition()
-      .then((pos) => {
-        if (!draggingRef.current || !dragStateRef.current) {
-          return;
-        }
-        dragStateRef.current = {
-          ...dragStateRef.current,
-          windowX: pos.x,
-          windowY: pos.y,
-          ready: true,
-        };
-      })
-      .catch((error: unknown) => {
-        console.error("WindowGetPosition failed", error);
-        dragStateRef.current = null;
-        draggingRef.current = false;
-        setIsDragging(false);
-        setIsGrabbing(false);
-      });
+    void WindowGetPosition().then((pos) => {
+      dragStateRef.current = {
+        startScreenX: event.screenX,
+        startScreenY: event.screenY,
+        windowX: pos.x,
+        windowY: pos.y,
+        ready: true,
+      };
+    });
   };
 
   useEffect(() => {
@@ -285,7 +249,14 @@ export function Pet({ sprite, isFloating, onToggleFloating }: PetProps) {
 
   return (
     <div
-      style={containerStyle}
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "flex-start",
+        pointerEvents: "auto",
+        userSelect: "none",
+        cursor: isGrabbing ? "grabbing" : "grab",
+      }}
       onDoubleClick={onToggleFloating}
       onContextMenu={handleContextMenu}
       onMouseDown={handleMouseDown}
@@ -313,6 +284,7 @@ export function Pet({ sprite, isFloating, onToggleFloating }: PetProps) {
         }}
         slotProps={{
           paper: {
+            ref: menuPaperRef,
             elevation: 6,
             sx: {
               "--wails-draggable": "no-drag",
@@ -337,7 +309,28 @@ export function Pet({ sprite, isFloating, onToggleFloating }: PetProps) {
         }}
       >
         <MenuItem
-          onClick={handleQuit}
+          onClick={(event) => {
+            event.stopPropagation();
+            handleOpenDialogFromMenu();
+          }}
+          sx={{
+            "--wails-draggable": "no-drag",
+            fontWeight: 500,
+            padding: "16px 26px 32px",
+            px: 2,
+            py: 1.25,
+            "&:hover": {
+              bgcolor: "rgba(255,255,255,0.12)",
+            },
+          }}
+        >
+          Talk
+        </MenuItem>
+        <MenuItem
+          onClick={(event) => {
+            event.stopPropagation();
+            handleQuit();
+          }}
           sx={{
             "--wails-draggable": "no-drag",
             fontWeight: 500,
