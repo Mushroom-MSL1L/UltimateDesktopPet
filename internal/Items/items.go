@@ -9,6 +9,11 @@ type Item struct {
 	Health      int16  `json:"health"`
 	Mood        int16  `json:"mood"`
 	Energy      int16  `json:"energy"`
-	MoneyCost   int  `json:"moneyCost"`
+	MoneyCost   int    `json:"moneyCost"`
 	Description string `json:"description"`
+}
+
+type ItemWithFrame struct {
+	Item
+	Frame string
 }

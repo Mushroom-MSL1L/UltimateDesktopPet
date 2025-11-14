@@ -13,7 +13,7 @@ func (System) DefaultConfig() *System {
 		UDPDBDir:              "./assets/db/udp.db",
 		StaticAssetsDBDir:     "./assets/db/static_assets.db",
 		PetImageFolder:        "default",
-		ItemsImageFolder:      "./assets/itemImages/default/",
-		ActivitiesImageFolder: "./assets/activityImages/default/",
+		ItemsImageFolder:      "default",
+		ActivitiesImageFolder: "default",
 	}
 }

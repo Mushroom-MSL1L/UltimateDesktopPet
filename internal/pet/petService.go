@@ -2,6 +2,7 @@ package pet
 
 import (
 	"UltimateDesktopPet/internal/database"
+	"UltimateDesktopPet/pkg/file"
 	pp "UltimateDesktopPet/pkg/print"
 	"context"
 	"errors"
@@ -11,10 +12,14 @@ import (
 
 type PetMeta struct {
 	Controller *database.BaseController[Pet]
-	ImagePath  string
 	DB         database.DB
 	Pet        *Pet
+	ST         file.SpriteTool
 }
+
+const petStaticAssetPath = "assets/petImages"
+const petDefaultImageFolder = "default"
+const defaultPetAnimationType = "stand"
 
 func init() {
 	p := newPetController(nil)
@@ -43,6 +48,9 @@ func (p *PetMeta) petServiceInit() {
 	var err error
 	p.Pet = &Pet{}
 	p.Controller = newPetController(&p.Pet)
+	p.ST = file.NewSpriteTool(p.ST)
+	p.ST.StaticAssetPath = petStaticAssetPath
+	p.ST.DefaultImageFolder = petDefaultImageFolder
 	db := p.DB.GetDB()
 
 	p.Pet, err = p.Controller.ReadFirst(db)
@@ -72,13 +80,17 @@ func (p *PetMeta) storePet() {
 	(*p.Pet).Lock()
 	db := p.DB.GetDB()
 	err := p.Controller.Create(db)
-	
+
 	if err != nil {
 		pp.Warn(pp.Pet, "failed to save pet state: %v", err)
 	} else {
 		pp.Info(pp.Pet, "pet state saved successfully")
 	}
 	(*p.Pet).Unlock()
+}
+
+func (p *PetMeta) LoadDefaultFrames() ([]string, error) {
+	return p.ST.LoadFramesFromDir(defaultPetAnimationType)
 }
 
 func (p *PetMeta) GetPetStatus() Pet {
