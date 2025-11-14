@@ -51,11 +51,12 @@ func (a *App) useConfigurations() {
 	sCfg := a.configs
 
 	a.petMeta.DB.InitDB(a.ctx, sCfg.UDPDBDir, database.Pets)
-	a.petMeta.ImagePath = sCfg.PetImageFolder
+	a.petMeta.ST.SpecifiedImageFolder = sCfg.PetImageFolder
 
 	a.itemsMeta.DB.InitDB(a.ctx, sCfg.StaticAssetsDBDir, database.StaticAssets)
-	a.itemsMeta.ImagePath = sCfg.ItemsImageFolder
-	a.activityMeta.ImagePath = sCfg.ActivitiesImageFolder
+	a.itemsMeta.ST.SpecifiedImageFolder = sCfg.ItemsImageFolder
+
+	a.activityMeta.ST.SpecifiedImageFolder = sCfg.ActivitiesImageFolder
 }
 
 func (a *App) Shutdown(parentCtx context.Context) {
@@ -72,7 +73,7 @@ func (a *App) Quit() {
 }
 
 func (a *App) PetFrames() ([]string, error) {
-	frames, err := loadDefaultFrames(a.configs.PetImageFolder)
+	frames, err := a.petMeta.LoadDefaultFrames()
 	if err != nil {
 		pp.Fatal(pp.App, "PetFrames: failed to load default frames: %v", err)
 		return nil, err
@@ -81,7 +82,7 @@ func (a *App) PetFrames() ([]string, error) {
 }
 
 func (a *App) PetFramesBy(animationType string) ([]string, error) {
-	frames, err := loadFramesFromDir(a.configs.PetImageFolder, animationType)
+	frames, err := a.petMeta.ST.LoadFramesFromDir(animationType)
 	if err != nil {
 		pp.Fatal(pp.App, "PetFramesBy: failed to load frames for animation type %s: %v", animationType, err)
 		return nil, err
@@ -100,17 +101,12 @@ func (a *App) ChatWithPet(userInput string) string {
 }
 
 func (a *App) LoadAllItems() ([]items.Item, error) {
-	itemsPtr, err := a.itemsMeta.LoadAll()
+	items, err := a.itemsMeta.LoadAll()
 	if err != nil {
 		pp.Warn(pp.Items, "LoadAllItems: failed to load all items: %v", err)
 		return nil, err
 	}
-
-	src := *itemsPtr
-	dst := make([]items.Item, len(src))
-	copy(dst, src)
-
-	return dst, err
+	return items, err
 }
 
 func (a *App) UseItem(item items.Item) error {
