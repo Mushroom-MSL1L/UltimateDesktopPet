@@ -98,3 +98,17 @@ func (a *App) ChatWithPet(userInput string) string {
 	}
 	return fmt.Sprintf("I'm still learning, but I heard: %s", trimmed)
 }
+
+func (a *App) LoadAllItems() ([]items.Item, error) {
+	itemsPtr, err := a.itemsMeta.LoadAll()
+	if err != nil {
+		pp.Warn(pp.Items, "LoadAllItems: failed to load all items: %v", err)
+		return nil, err
+	}
+
+	src := *itemsPtr
+	dst := make([]items.Item, len(src))
+	copy(dst, src)
+
+	return dst, err
+}
