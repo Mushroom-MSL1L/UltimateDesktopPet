@@ -112,3 +112,16 @@ func (a *App) LoadAllItems() ([]items.Item, error) {
 
 	return dst, err
 }
+
+func (a *App) UseItem(item items.Item) error {
+	oldPet := a.petMeta.GetPetStatus()
+	if (oldPet.Money + item.MoneyCost) < 0 {
+		errMessage := fmt.Sprintf("UseItem: pet has not enough money to use %s", item.Name)
+		pp.Info(pp.App, errMessage)
+		return fmt.Errorf(errMessage)
+	}
+
+	a.petMeta.UpdateStatus(item.Water, item.Hunger, item.Health, item.Mood, item.Energy, item.MoneyCost)
+	pp.Info(pp.App, "UseItem: pet use \"%s\" and update status", item.Name)
+	return nil
+}
