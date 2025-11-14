@@ -3,6 +3,7 @@ package database
 import (
 	pp "UltimateDesktopPet/pkg/print"
 	"errors"
+	"fmt"
 	"reflect"
 
 	"gorm.io/gorm"
@@ -44,4 +45,20 @@ func (b *BaseController[T]) ReadFirst(db *gorm.DB) (*T, error) {
 	}
 	*b.Model = &instance
 	return *b.Model, nil
+}
+
+func (b *BaseController[T]) ReadAll(db *gorm.DB) (*[]T, error) {
+if b == nil || b.Model == nil || *b.Model == nil {
+		return nil, fmt.Errorf("BaseController or Model is nil")
+	}
+	if db == nil {
+		return nil, fmt.Errorf("db is nil")
+	}
+
+	var instance []T
+	result := db.Model(*b.Model).Find(&instance)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &instance, nil
 }
