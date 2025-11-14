@@ -1,6 +1,7 @@
 package pet
 
 import (
+	"UltimateDesktopPet/pkg/math"
 	pp "UltimateDesktopPet/pkg/print"
 	"context"
 	"sync"
@@ -15,23 +16,12 @@ type Pet struct {
 	Health int16 `json:"health"`
 	Mood   int16 `json:"mood"`
 	Energy int16 `json:"energy"`
-	Money  int16 `json:"money"`
+	Money  int `json:"money"`
 }
 
 const (
 	Max       int16 = 100
-	WaterMax        = Max
-	HungerMax       = Max
-	HealthMax       = Max
-	MoodMax         = Max
-	EnergyMax       = Max
-
 	Min       int16 = 0
-	WaterMin        = Min
-	HungerMin       = Min
-	HealthMin       = Min
-	MoodMin         = Min
-	EnergyMin       = Min
 )
 
 func (p *Pet) periodicallyUpdateStates(c context.Context) {
@@ -42,10 +32,10 @@ func (p *Pet) periodicallyUpdateStates(c context.Context) {
 			return
 		case <-time.After(waitTime):
 			p.Lock()
-			p.Water = max(WaterMin, p.Water-1)
-			p.Hunger = max(HungerMin, p.Hunger-1)
-			p.Mood = max(MoodMin, p.Mood-1)
-			p.Energy = min(EnergyMax, p.Energy+1)
+			p.Water = max(Min, p.Water-1)
+			p.Hunger = max(Min, p.Hunger-1)
+			p.Mood = max(Min, p.Mood-1)
+			p.Energy = min(Max, p.Energy+1)
 			p.Unlock()
 		}
 	}
@@ -69,3 +59,27 @@ func (p *Pet) printStatus() {
 		p.Water, p.Hunger, p.Health, p.Mood, p.Energy, p.Money)
 	p.Unlock()
 }
+
+func (p *Pet) getStatus() Pet {
+	p.Lock()
+	defer p.Unlock()
+	return Pet{
+		Water: p.Water,
+		Hunger: p.Hunger,
+		Health: p.Health,
+		Mood: p.Mood,
+		Energy: p.Energy,
+		Money: p.Money,
+	}
+}
+
+func (p *Pet) updateStatus(water, hunger, health, mood, energy int16, money int) {
+	p.Lock()
+	defer p.Unlock()
+	p.Water  = math.InRange(p.Water+water, Max, Min)
+	p.Hunger = math.InRange(p.Hunger+hunger, Max, Min)
+	p.Health = math.InRange(p.Health+health, Max, Min)
+	p.Mood   = math.InRange(p.Mood+mood, Max, Min)
+	p.Energy = math.InRange(p.Energy+energy, Max, Min)
+	p.Money = p.Money+money
+} 

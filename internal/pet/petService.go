@@ -34,13 +34,7 @@ func (p *PetMeta) Service(c context.Context) {
 }
 
 func (p *PetMeta) Shutdown() {
-	db := p.DB.GetDB()
-	err := p.Controller.Create(db)
-	if err != nil {
-		pp.Warn(pp.Pet, "failed to save pet state: %v", err)
-	} else {
-		pp.Info(pp.Pet, "pet state saved successfully")
-	}
+	p.storePet()
 	p.DB.CloseDB()
 	pp.Assert(pp.Pet, "pet service stopped")
 }
@@ -56,12 +50,12 @@ func (p *PetMeta) petServiceInit() {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// create a default pet when none exists
 			defaultPet := &Pet{
-				Water:  WaterMax,
-				Hunger: HungerMax,
-				Health: HealthMax,
-				Mood:   MoodMax,
-				Energy: EnergyMax,
 				Money:  0,
+				Water:  Max,
+				Hunger: Max,
+				Health: Max,
+				Mood:   Max,
+				Energy: Max,
 			}
 			if err := db.Create(defaultPet).Error; err != nil {
 				pp.Fatal(pp.Pet, "failed to create default pet: %v", err)
@@ -72,4 +66,26 @@ func (p *PetMeta) petServiceInit() {
 		}
 		pp.Fatal(pp.Pet, "Read first pet entry failed: %v", err)
 	}
+}
+
+func (p *PetMeta) storePet() {
+	(*p.Pet).Lock()
+	db := p.DB.GetDB()
+	err := p.Controller.Create(db)
+	
+	if err != nil {
+		pp.Warn(pp.Pet, "failed to save pet state: %v", err)
+	} else {
+		pp.Info(pp.Pet, "pet state saved successfully")
+	}
+	(*p.Pet).Unlock()
+}
+
+func (p *PetMeta) GetPetStatus() Pet {
+	return (*p.Pet).getStatus()
+}
+
+func (p *PetMeta) UpdateStatus(water, hunger, health, mood, energy int16, money int) {
+	(*p.Pet).updateStatus(water, hunger, health, mood, energy, money)
+	p.storePet()
 }
