@@ -1,14 +1,21 @@
 package activities
 
 type Activity struct {
-	Path        string `json:"path"`
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Water       int16  `json:"water"`
-	Hunger      int16  `json:"hunger"`
-	Health      int16  `json:"health"`
-	Mood        int16  `json:"mood"`
-	Energy      int16  `json:"energy"`
-	Money       int16  `json:"money"`
-	Description string `json:"description"`
+	Path           string `json:"path"`
+	Name           string `json:"name"`
+	Type           string `json:"type"`
+	Experience     int    `json:"experience"`
+	Water          int16  `json:"water"`
+	Hunger         int16  `json:"hunger"`
+	Health         int16  `json:"health"`
+	Mood           int16  `json:"mood"`
+	Energy         int16  `json:"energy"`
+	Money          int    `json:"money"`
+	DurationMinute int16  `json:"duration_minute"`
+	Description    string `json:"description"`
+}
+
+type ActivityWithFrames struct {
+	Activity
+	Frames []string
 }

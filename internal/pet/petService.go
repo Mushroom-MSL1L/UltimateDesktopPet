@@ -6,20 +6,32 @@ import (
 	pp "UltimateDesktopPet/pkg/print"
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 )
 
-type PetMeta struct {
-	Controller *database.BaseController[Pet]
-	DB         database.DB
-	Pet        *Pet
-	ST         file.SpriteTool
-}
+type PetStatus int8
 
-const petStaticAssetPath = "assets/petImages"
-const petDefaultImageFolder = "default"
-const defaultPetAnimationType = "stand"
+const (
+	Idle PetStatus = iota
+	Acting
+
+	petStaticAssetPath      = "assets/petImages"
+	petDefaultImageFolder   = "default"
+	defaultPetAnimationType = "stand"
+)
+
+type PetMeta struct {
+	Controller   *database.BaseController[Pet]
+	DB           database.DB
+	Pet          *Pet
+	ST           file.SpriteTool
+	Status       PetStatus
+	StatusDetail string
+	DoneSignal   chan struct{}
+}
 
 func init() {
 	p := newPetController(nil)
@@ -48,6 +60,7 @@ func (p *PetMeta) petServiceInit() {
 	var err error
 	p.Pet = &Pet{}
 	p.Controller = newPetController(&p.Pet)
+	p.Status = Idle
 	p.ST = file.NewSpriteTool(p.ST)
 	p.ST.StaticAssetPath = petStaticAssetPath
 	p.ST.DefaultImageFolder = petDefaultImageFolder
@@ -58,12 +71,13 @@ func (p *PetMeta) petServiceInit() {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// create a default pet when none exists
 			defaultPet := &Pet{
-				Money:  0,
-				Water:  Max,
-				Hunger: Max,
-				Health: Max,
-				Mood:   Max,
-				Energy: Max,
+				Experience: 0,
+				Money:      100000,
+				Water:      Max,
+				Hunger:     Max,
+				Health:     Max,
+				Mood:       Max,
+				Energy:     Max,
 			}
 			if err := db.Create(defaultPet).Error; err != nil {
 				pp.Fatal(pp.Pet, "failed to create default pet: %v", err)
@@ -97,7 +111,50 @@ func (p *PetMeta) GetPetStatus() Pet {
 	return (*p.Pet).getStatus()
 }
 
-func (p *PetMeta) UpdateStatus(water, hunger, health, mood, energy int16, money int) {
-	(*p.Pet).updateStatus(water, hunger, health, mood, energy, money)
+func (p *PetMeta) UpdateStatus(expr int, water, hunger, health, mood, energy int16, money int) {
+	(*p.Pet).updateStatus(expr, water, hunger, health, mood, energy, money)
 	p.storePet()
+}
+
+func (p *PetMeta) PerformActivity(name string, expr int, water, hunger, health, mood, energy int16, money int, durationMinutes int16) error {
+	if p.Status == Acting {
+		return fmt.Errorf("PerformActivity: Pet already acting %s", p.StatusDetail)
+	}
+	p.Status = Acting
+	p.StatusDetail = name
+	p.DoneSignal = make(chan struct{})
+
+	starting := time.Now()
+	duration := time.Duration(durationMinutes) * time.Minute
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-p.DoneSignal:
+				p.Status = Idle
+				p.StatusDetail = ""
+				return
+			case <-ticker.C:
+				elapsed := time.Since(starting)
+				pp.Info(pp.Pet, "Acting %s for %v", name, elapsed)
+				if elapsed >= duration {
+					p.Status = Idle
+					p.StatusDetail = ""
+					pp.Info(pp.Pet, "Activity %s completed", name)
+					return
+				}
+			}
+		}
+	}()
+	return nil
+}
+
+func (p *PetMeta) StopActivity() {
+	if p.Status != Acting {
+		return
+	}
+	p.DoneSignal <- struct{}{}
+	close(p.DoneSignal)
 }

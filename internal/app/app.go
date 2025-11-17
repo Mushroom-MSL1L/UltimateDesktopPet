@@ -45,6 +45,7 @@ func (a *App) Startup(parentCtx context.Context) {
 
 	/* app services */
 	go a.petMeta.Service(a.ctx)
+	go a.itemsMeta.Service(a.ctx)
 }
 
 func (a *App) useConfigurations() {
@@ -100,7 +101,7 @@ func (a *App) ChatWithPet(userInput string) string {
 	return fmt.Sprintf("I'm still learning, but I heard: %s", trimmed)
 }
 
-func (a *App) LoadAllItems() ([]items.Item, error) {
+func (a *App) LoadAllItems() ([]items.ItemWithFrame, error) {
 	items, err := a.itemsMeta.LoadAll()
 	if err != nil {
 		pp.Warn(pp.Items, "LoadAllItems: failed to load all items: %v", err)
@@ -117,7 +118,26 @@ func (a *App) UseItem(item items.Item) error {
 		return fmt.Errorf(errMessage)
 	}
 
-	a.petMeta.UpdateStatus(item.Water, item.Hunger, item.Health, item.Mood, item.Energy, item.MoneyCost)
+	a.petMeta.UpdateStatus(item.Experience, item.Water, item.Hunger, item.Health, item.Mood, item.Energy, item.MoneyCost)
 	pp.Info(pp.App, "UseItem: pet use \"%s\" and update status", item.Name)
 	return nil
+}
+
+func (a *App) LoadAllActivities() ([]activities.ActivityWithFrames, error) {
+	activities, err := a.activityMeta.LoadAll()
+	if err != nil {
+		pp.Warn(pp.Activities, "LoadAllActivities: failed to load all activities: %v", err)
+		return nil, err
+	}
+	return activities, err
+}
+
+func (a *App) PerformActivity(acti activities.Activity) {
+	pp.Info(pp.App, "PerformActivity : %s", acti.Name)
+
+	a.petMeta.PerformActivity(acti.Name, acti.Experience, acti.Water, acti.Hunger, acti.Health, acti.Mood, acti.Energy, acti.Money, acti.DurationMinute)
+}
+
+func (a *App) StopActivity() {
+	a.petMeta.StopActivity()
 }

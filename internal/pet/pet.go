@@ -10,18 +10,19 @@ import (
 
 type Pet struct {
 	sync.Mutex
-	ID     uint  `json:"id" gorm:"primaryKey;autoIncrement"`
-	Water  int16 `json:"water"`
-	Hunger int16 `json:"hunger"`
-	Health int16 `json:"health"`
-	Mood   int16 `json:"mood"`
-	Energy int16 `json:"energy"`
-	Money  int `json:"money"`
+	ID         uint  `json:"id" gorm:"primaryKey;autoIncrement"`
+	Experience int   `json:"experience"`
+	Water      int16 `json:"water"`
+	Hunger     int16 `json:"hunger"`
+	Health     int16 `json:"health"`
+	Mood       int16 `json:"mood"`
+	Energy     int16 `json:"energy"`
+	Money      int   `json:"money"`
 }
 
 const (
-	Max       int16 = 100
-	Min       int16 = 0
+	Max int16 = 100
+	Min int16 = 0
 )
 
 func (p *Pet) periodicallyUpdateStates(c context.Context) {
@@ -55,8 +56,8 @@ func (p *Pet) periodicallyPrintStatus(c context.Context) {
 
 func (p *Pet) printStatus() {
 	p.Lock()
-	pp.Info(pp.Pet, "Pet Status - Water: %d, Hunger: %d, Health: %d, Mood: %d, Energy: %d, Money: %d",
-		p.Water, p.Hunger, p.Health, p.Mood, p.Energy, p.Money)
+	pp.Info(pp.Pet, "Pet Status - Expr: %d Water: %d, Hunger: %d, Health: %d, Mood: %d, Energy: %d, Money: %d",
+		p.Experience, p.Water, p.Hunger, p.Health, p.Mood, p.Energy, p.Money)
 	p.Unlock()
 }
 
@@ -64,22 +65,24 @@ func (p *Pet) getStatus() Pet {
 	p.Lock()
 	defer p.Unlock()
 	return Pet{
-		Water: p.Water,
-		Hunger: p.Hunger,
-		Health: p.Health,
-		Mood: p.Mood,
-		Energy: p.Energy,
-		Money: p.Money,
+		Experience: p.Experience,
+		Water:      p.Water,
+		Hunger:     p.Hunger,
+		Health:     p.Health,
+		Mood:       p.Mood,
+		Energy:     p.Energy,
+		Money:      p.Money,
 	}
 }
 
-func (p *Pet) updateStatus(water, hunger, health, mood, energy int16, money int) {
+func (p *Pet) updateStatus(expr int, water, hunger, health, mood, energy int16, money int) {
 	p.Lock()
 	defer p.Unlock()
-	p.Water  = math.InRange(p.Water+water, Max, Min)
+	p.Experience = p.Experience + expr
+	p.Water = math.InRange(p.Water+water, Max, Min)
 	p.Hunger = math.InRange(p.Hunger+hunger, Max, Min)
 	p.Health = math.InRange(p.Health+health, Max, Min)
-	p.Mood   = math.InRange(p.Mood+mood, Max, Min)
+	p.Mood = math.InRange(p.Mood+mood, Max, Min)
 	p.Energy = math.InRange(p.Energy+energy, Max, Min)
-	p.Money = p.Money+money
-} 
+	p.Money = p.Money + money
+}
