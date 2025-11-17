@@ -4,6 +4,7 @@ type Item struct {
 	Path        string `json:"path"`
 	Name        string `json:"name"`
 	Type        string `json:"type"`
+	Experience  int    `json:"experience"`
 	Water       int16  `json:"water"`
 	Hunger      int16  `json:"hunger"`
 	Health      int16  `json:"health"`

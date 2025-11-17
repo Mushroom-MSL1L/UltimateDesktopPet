@@ -51,7 +51,7 @@ func (i *ItemsMeta) LoadAll() ([]ItemWithFrame, error) {
 	for _, item := range *items {
 		frame, err := i.ST.LoadFrameFromDir(item.Path)
 		if err != nil {
-			pp.Warn(pp.Items, "%v", err)
+			pp.Warn(pp.Items, "LoadAll: item %s cannot load frame: %v", item.Name, err)
 			continue
 		}
 		var temp ItemWithFrame
