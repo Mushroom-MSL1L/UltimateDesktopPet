@@ -2,38 +2,18 @@ import {
   CSSProperties,
   MouseEvent as ReactMouseEvent,
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 import { Menu, MenuItem } from "@mui/material";
-import { Quit as QuitFromApp } from "../../wailsjs/go/app/App";
+import { Quit as QuitFromApp } from "../../../wailsjs/go/app/App";
 import {
   AdjustWindowfromLeftBottom,
   UpdatePetHitbox,
-} from "../../wailsjs/go/window/WindowService";
-import {
-  WindowGetPosition,
-  WindowSetPosition,
-} from "../../wailsjs/runtime/runtime";
-
-const baseSpriteStyle: CSSProperties = {
-  width: "150px",
-  height: "150px",
-  objectFit: "contain",
-  pointerEvents: "none",
-  transformOrigin: "center bottom",
-  display: "block",
-  background: "transparent",
-  backgroundColor: "transparent",
-  animation: "none",
-  transform: "none",
-  willChange: "auto",
-  backfaceVisibility: "hidden",
-  transition: "none",
-};
+} from "../../../wailsjs/go/window/WindowService";
+import "./Pet.css";
 
 const DEFAULT_WINDOW_SIZE = { width: 150, height: 150 };
 const WINDOW_EXPAND_TARGET_SIZE = { width: 400, height: 300 }; // reserve space for side menu without clipping the pet
@@ -59,21 +39,8 @@ export function Pet({
     top: number;
     left: number;
   } | null>(null);
-  const [isGrabbing, setIsGrabbing] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
 
   const spriteRef = useRef<HTMLImageElement | null>(null);
-  const spriteSizeRef = useRef<{ width: number; height: number }>({
-    ...DEFAULT_WINDOW_SIZE,
-  });
-  const dragStateRef = useRef<{
-    startScreenX: number;
-    startScreenY: number;
-    windowX: number;
-    windowY: number;
-    ready: boolean;
-  } | null>(null);
-  const draggingRef = useRef(false);
   const menuWindowExpandedRef = useRef(false);
   const menuPaperRef = useRef<HTMLDivElement | null>(null);
 
@@ -86,7 +53,6 @@ export function Pet({
       return;
     }
     const rect = node.getBoundingClientRect();
-    spriteSizeRef.current = { width: rect.width, height: rect.height };
     void UpdatePetHitbox({
       left: rect.left,
       top: rect.top,
@@ -111,59 +77,8 @@ export function Pet({
     return () => window.cancelAnimationFrame(frame);
   }, [sprite, syncHitbox]);
 
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!draggingRef.current) {
-        return;
-      }
-      event.preventDefault();
-      const dragState = dragStateRef.current;
-      if (!dragState || !dragState.ready) {
-        return;
-      }
-      const deltaX = event.screenX - dragState.startScreenX;
-      const deltaY = event.screenY - dragState.startScreenY;
-      WindowSetPosition(
-        Math.round(dragState.windowX + deltaX * window.devicePixelRatio),
-        Math.round(dragState.windowY + deltaY * window.devicePixelRatio)
-      );
-    };
-
-    const handleMouseUp = () => {
-      if (!draggingRef.current) {
-        return;
-      }
-      draggingRef.current = false;
-      dragStateRef.current = null;
-      setIsDragging(false);
-      setIsGrabbing(false);
-      syncHitbox();
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [syncHitbox]);
-
-  const spriteStyle = useMemo(() => {
-    const style: React.CSSProperties = {
-      ...baseSpriteStyle,
-
-      imageRendering: "pixelated",
-
-      // vendor-prefixed props that aren't in the type: use localized "any" key cast
-      ["WebkitImageRendering" as any]: "pixelated",
-      ["MozImageRendering" as any]: "pixelated",
-      ["msInterpolationMode" as any]: "nearest-neighbor",
-
-      ...(isFloating ? {} : { animationPlayState: "paused" }),
-    };
-
-    return style;
+  const spriteStyle = useMemo<CSSProperties | undefined>(() => {
+    return isFloating ? undefined : { animationPlayState: "paused" };
   }, [isFloating]);
 
   const computeMenuAnchorPosition = useCallback(() => {
@@ -224,39 +139,11 @@ export function Pet({
       void handleCloseMenu();
       return;
     }
-
-    event.preventDefault();
-    draggingRef.current = true;
-    setIsGrabbing(true);
-    setIsDragging(true);
-    void WindowGetPosition().then((pos) => {
-      dragStateRef.current = {
-        startScreenX: event.screenX,
-        startScreenY: event.screenY,
-        windowX: pos.x,
-        windowY: pos.y,
-        ready: true,
-      };
-    });
   };
-
-  useEffect(() => {
-    if (isDragging) {
-      return;
-    }
-    syncHitbox();
-  }, [isDragging, syncHitbox]);
 
   return (
     <div
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "flex-start",
-        pointerEvents: "auto",
-        userSelect: "none",
-        cursor: isGrabbing ? "grabbing" : "grab",
-      }}
+      className="pet-shell"
       onDoubleClick={onToggleFloating}
       onContextMenu={handleContextMenu}
       onMouseDown={handleMouseDown}
@@ -266,6 +153,7 @@ export function Pet({
           src={sprite}
           alt="Desktop pet"
           draggable={false}
+          className="pet-sprite"
           style={spriteStyle}
           ref={spriteRef}
           onLoad={syncHitbox}
@@ -309,7 +197,7 @@ export function Pet({
         }}
       >
         <MenuItem
-          onClick={(event) => {
+          onClick={(event: ReactMouseEvent) => {
             event.stopPropagation();
             handleOpenDialogFromMenu();
           }}
@@ -327,7 +215,7 @@ export function Pet({
           Talk
         </MenuItem>
         <MenuItem
-          onClick={(event) => {
+          onClick={(event: ReactMouseEvent) => {
             event.stopPropagation();
             handleQuit();
           }}

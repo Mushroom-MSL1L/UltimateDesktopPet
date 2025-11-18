@@ -8,8 +8,11 @@ import {
 import { ChatWithPet, PetSprite } from "../wailsjs/go/app/App";
 import { AdjustWindowfromLeftBottom } from "../wailsjs/go/window/WindowService";
 import { WindowSetAlwaysOnTop } from "../wailsjs/runtime/runtime";
-import { Pet } from "./components/Pet";
-import { PetDialog, type ConversationMessage } from "./components/PetDialog";
+import { Pet } from "./components/Pet/Pet";
+import {
+  PetDialog,
+  type ConversationMessage,
+} from "./components/Pet/PetDialog";
 
 const noDragStyle: CSSProperties = {
   ["--wails-draggable" as any]: "no-drag",
@@ -33,12 +36,6 @@ const baseAppShellStyle: CSSProperties = {
   willChange: "transform, opacity",
   background: TRANSPARENT_BACKGROUND,
   backfaceVisibility: "hidden",
-};
-
-const baseHintStyle: CSSProperties = {
-  display: "none",
-  opacity: 0,
-  animation: "none",
 };
 
 const PET_WINDOW_DEFAULT_SIZE = { width: 150, height: 150 };

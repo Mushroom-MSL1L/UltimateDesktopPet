@@ -1,0 +1,32 @@
+.pet-shell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  pointer-events: auto;
+  user-select: none;
+  --wails-draggable: drag;
+}
+
+.pet-sprite {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  transform-origin: center bottom;
+  display: block;
+  background: transparent;
+  background-color: transparent;
+  animation: none;
+  transform: none;
+  will-change: auto;
+  backface-visibility: hidden;
+  transition: none;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor;
+  cursor: grab;
+}
+
+.pet-sprite:active {
+  cursor: grabbing;
+}

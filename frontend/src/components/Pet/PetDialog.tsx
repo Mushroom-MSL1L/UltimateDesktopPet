@@ -9,7 +9,13 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export type ConversationMessage = {
   id: string;
@@ -177,7 +183,7 @@ export function PetDialog({
         </Box>
         <Box
           component="form"
-          onSubmit={(event) => {
+          onSubmit={(event: FormEvent<HTMLFormElement>) => {
             event.preventDefault();
             handleSend();
           }}
@@ -192,7 +198,9 @@ export function PetDialog({
             size="small"
             placeholder="Tell your pet something..."
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(
+              event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => setDraft(event.target.value)}
             disabled={isBusy}
             multiline
             minRows={1}
