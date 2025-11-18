@@ -3,6 +3,8 @@ build/bin
 node_modules
 frontend/dist
 frontend/*.mjs
+frontend/package.json.md5
+frontend/wailsjs
 
 # system 
 configs/*.yaml
