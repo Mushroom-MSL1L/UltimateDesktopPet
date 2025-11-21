@@ -7,13 +7,15 @@ import {
   useRef,
   useState,
 } from "react";
-import { Menu, MenuItem } from "@mui/material";
 import { Quit as QuitFromApp } from "../../../wailsjs/go/app/App";
-import {
-  AdjustWindowfromLeftBottom,
-  UpdatePetHitbox,
-} from "../../../wailsjs/go/window/WindowService";
+import { AdjustWindowFromBottom } from "../../../wailsjs/go/window/WindowService";
 import "./Pet.css";
+import { TalkBar } from "./TalkBar";
+import { ResponseBubble } from "./ResponseBubble";
+import {
+  WindowGetPosition,
+  WindowSetPosition,
+} from "../../../wailsjs/runtime/runtime";
 
 const DEFAULT_WINDOW_SIZE = { width: 150, height: 150 };
 const WINDOW_EXPAND_TARGET_SIZE = { width: 400, height: 300 }; // reserve space for side menu without clipping the pet
@@ -23,16 +25,26 @@ type AnchorPosition = { left: number; top: number };
 
 type PetProps = {
   sprite: string;
-  isFloating: boolean;
-  onToggleFloating: () => void;
   onOpenDialog: (anchor: AnchorPosition) => void;
+  isQuickTalkOpen: boolean;
+  onSendQuickMessage: (message: string) => void | Promise<void>;
+  onRequestQuickTalk?: () => void;
+  isChatBusy?: boolean;
+  quickResponseMessage: string | null;
+  isResponseBubbleOpen: boolean;
+  onDismissResponseBubble: () => void;
 };
 
 export function Pet({
   sprite,
-  isFloating,
-  onToggleFloating,
   onOpenDialog,
+  isQuickTalkOpen,
+  onSendQuickMessage,
+  onRequestQuickTalk,
+  isChatBusy,
+  quickResponseMessage,
+  isResponseBubbleOpen,
+  onDismissResponseBubble,
 }: PetProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuAnchorPosition, setMenuAnchorPosition] = useState<{
@@ -43,43 +55,6 @@ export function Pet({
   const spriteRef = useRef<HTMLImageElement | null>(null);
   const menuWindowExpandedRef = useRef(false);
   const menuPaperRef = useRef<HTMLDivElement | null>(null);
-
-  const syncHitbox = useCallback(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const node = spriteRef.current;
-    if (!node) {
-      return;
-    }
-    const rect = node.getBoundingClientRect();
-    void UpdatePetHitbox({
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height,
-      devicePixelRatio: window.devicePixelRatio || 1,
-    }).catch((error: unknown) =>
-      console.error("UpdatePetHitbox failed", error)
-    );
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!sprite) {
-      return;
-    }
-    if (typeof window === "undefined") {
-      return;
-    }
-    const frame = window.requestAnimationFrame(() => {
-      syncHitbox();
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [sprite, syncHitbox]);
-
-  const spriteStyle = useMemo<CSSProperties | undefined>(() => {
-    return isFloating ? undefined : { animationPlayState: "paused" };
-  }, [isFloating]);
 
   const computeMenuAnchorPosition = useCallback(() => {
     const spriteNode = spriteRef.current;
@@ -93,8 +68,9 @@ export function Pet({
   const handleContextMenu = async (event: ReactMouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    onRequestQuickTalk?.();
     setMenuAnchorPosition(computeMenuAnchorPosition());
-    await AdjustWindowfromLeftBottom(
+    await AdjustWindowFromBottom(
       WINDOW_EXPAND_TARGET_SIZE.width,
       WINDOW_EXPAND_TARGET_SIZE.height
     );
@@ -104,7 +80,7 @@ export function Pet({
 
   const handleCloseMenu = async () => {
     setIsMenuOpen(false);
-    await AdjustWindowfromLeftBottom(
+    await AdjustWindowFromBottom(
       DEFAULT_WINDOW_SIZE.width,
       DEFAULT_WINDOW_SIZE.height
     );
@@ -135,6 +111,13 @@ export function Pet({
         // Let menu items process this click.
         return;
       }
+      onDismissResponseBubble!();
+      const target = event.target;
+      const clickedTalkBar =
+        target instanceof Element && Boolean(target.closest(".talk-bar"));
+      if (clickedTalkBar) {
+        return;
+      }
       event.preventDefault();
       void handleCloseMenu();
       return;
@@ -144,7 +127,6 @@ export function Pet({
   return (
     <div
       className="pet-shell"
-      onDoubleClick={onToggleFloating}
       onContextMenu={handleContextMenu}
       onMouseDown={handleMouseDown}
     >
@@ -154,84 +136,19 @@ export function Pet({
           alt="Desktop pet"
           draggable={false}
           className="pet-sprite"
-          style={spriteStyle}
           ref={spriteRef}
-          onLoad={syncHitbox}
         />
       )}
-
-      <Menu
-        open={isMenuOpen}
-        onClose={handleCloseMenu}
-        anchorReference="anchorPosition"
-        anchorPosition={menuAnchorPosition ?? undefined}
-        transformOrigin={{ vertical: "bottom", horizontal: "left" }}
-        disablePortal
-        sx={{
-          position: "fixed",
-        }}
-        slotProps={{
-          paper: {
-            ref: menuPaperRef,
-            elevation: 6,
-            sx: {
-              "--wails-draggable": "no-drag",
-              minWidth: 140,
-              borderRadius: 1.5,
-              bgcolor: "rgba(30, 30, 30, 0.95)",
-              color: "#f5f5f5",
-              py: 0.5,
-              backdropFilter: "blur(6px)",
-            },
-          },
-          list: {
-            dense: true,
-            onMouseDown: (event: ReactMouseEvent) => {
-              event.stopPropagation();
-            },
-            sx: {
-              "--wails-draggable": "no-drag",
-              py: 0,
-            },
-          },
-        }}
-      >
-        <MenuItem
-          onClick={(event: ReactMouseEvent) => {
-            event.stopPropagation();
-            handleOpenDialogFromMenu();
-          }}
-          sx={{
-            "--wails-draggable": "no-drag",
-            fontWeight: 500,
-            padding: "16px 26px 32px",
-            px: 2,
-            py: 1.25,
-            "&:hover": {
-              bgcolor: "rgba(255,255,255,0.12)",
-            },
-          }}
-        >
-          Talk
-        </MenuItem>
-        <MenuItem
-          onClick={(event: ReactMouseEvent) => {
-            event.stopPropagation();
-            handleQuit();
-          }}
-          sx={{
-            "--wails-draggable": "no-drag",
-            fontWeight: 500,
-            px: 2,
-            py: 1.25,
-            "&:hover": {
-              bgcolor: "rgba(255,255,255,0.12)",
-            },
-          }}
-        >
-          Quit
-        </MenuItem>
-      </Menu>
+      <ResponseBubble
+        message={quickResponseMessage ?? null}
+        open={isResponseBubbleOpen}
+        onDismiss={onDismissResponseBubble}
+      />
+      <TalkBar
+        open={isQuickTalkOpen}
+        onSend={onSendQuickMessage}
+        disabled={isChatBusy}
+      />
     </div>
   );
 }

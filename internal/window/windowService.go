@@ -1,36 +1,33 @@
 package window
 
 import (
-	"context"
-	"sync"
-
 	pp "UltimateDesktopPet/pkg/print"
+	"context"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // PetHitbox defines the sprite bounds reported from the frontend.
 type PetHitbox struct {
-	Left             float64 `json:"left"`
-	Top              float64 `json:"top"`
-	Width            float64 `json:"width"`
-	Height           float64 `json:"height"`
-	DevicePixelRatio float64 `json:"devicePixelRatio"`
+	Left             int `json:"left"`
+	Top              int `json:"top"`
+	Width            int `json:"width"`
+	Height           int `json:"height"`
+	DevicePixelRatio int `json:"devicePixelRatio"`
 }
 
 // Bounds represents the current window rectangle in screen coordinates.
 type Bounds struct {
-	Left   float64
-	Top    float64
-	Width  float64
-	Height float64
+	Left   int
+	Top    int
+	Width  int
+	Height int
 }
 
 // WindowService centralizes window sizing logic and exposes it directly to Wails bindings.
 type WindowService struct {
 	ctx    context.Context
-	mu     sync.RWMutex
-	hitbox PetHitbox
+	devicePixelRatio float64
 }
 
 func NewWindowService() *WindowService {
@@ -40,30 +37,15 @@ func NewWindowService() *WindowService {
 // SetContext should be called from the main OnStartup hook so runtime helpers
 // can access the valid lifecycle context later on.
 func (w *WindowService) SetContext(ctx context.Context) {
-	w.mu.Lock()
 	w.ctx = ctx
-	w.mu.Unlock()
 }
 
-func (w *WindowService) UpdatePetHitbox(hitbox PetHitbox) error {
-	if hitbox.DevicePixelRatio <= 0 {
-		hitbox.DevicePixelRatio = 1
-	}
-
-	w.mu.Lock()
-	w.hitbox = hitbox
-	w.mu.Unlock()
-	return nil
+func (w *WindowService) SetDevicePixelRatio(devicePixelRatio float64) {
+	w.devicePixelRatio = devicePixelRatio
 }
 
-func (w *WindowService) AdjustWindowfromLeftBottom(width, height float64) {
-	ctx := w.runtimeCtx()
-	if ctx == nil {
-		pp.Warn(pp.System, "window context not initialised yet; skipping resize request")
-		return
-	}
-
-	current := w.currentBounds(ctx)
+func (w *WindowService) AdjustWindowFromLeftBottom(width, height int) {
+	current := w.currentBounds()
 	newBound := Bounds{
 		Top:    current.Top,
 		Left:   current.Left,
@@ -71,32 +53,39 @@ func (w *WindowService) AdjustWindowfromLeftBottom(width, height float64) {
 		Height: height,
 	}
 
-	applyWindowBounds(ctx, newBound)
+	applyWindowBounds(w.ctx, newBound)
 }
 
-func (w *WindowService) currentBounds(ctx context.Context) Bounds {
-	w.mu.RLock()
-	hitbox := w.hitbox
-	w.mu.RUnlock()
+func (w *WindowService) AdjustWindowFromBottom(width, height int) {
 
-	windowX, windowY := runtime.WindowGetPosition(ctx)
+	current := w.currentBounds()
+
+	newBound := Bounds{
+		Top:    current.Top,
+		Left:   int(float64(current.Left) + float64(current.Width-width)/2*w.devicePixelRatio),
+		Width:  width,
+		Height: height,
+	}
+
+	pp.Assert(pp.System, "current bounds: %+v", current)
+	pp.Assert(pp.System, "new bounds:     %+v", newBound)
+	applyWindowBounds(w.ctx, newBound)
+}
+
+func (w *WindowService) currentBounds() Bounds {
+	windowWidth, windowHeight := runtime.WindowGetSize(w.ctx)
+	windowX, windowY := runtime.WindowGetPosition(w.ctx)
 
 	return Bounds{
-		Left:   float64(windowX),
-		Top:    float64(windowY),
-		Width:  hitbox.Width,
-		Height: hitbox.Height,
+		Left:   windowX,
+		Width:  windowWidth,
+		Height: windowHeight,
+		Top:    windowY,
 	}
 }
 
 func applyWindowBounds(ctx context.Context, bounds Bounds) Bounds {
-	runtime.WindowSetPosition(ctx, int(bounds.Left), int(bounds.Top))
 	runtime.WindowSetSize(ctx, int(bounds.Width), int(bounds.Height))
+	runtime.WindowSetPosition(ctx, int(bounds.Left), int(bounds.Top))
 	return bounds
-}
-
-func (w *WindowService) runtimeCtx() context.Context {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	return w.ctx
 }

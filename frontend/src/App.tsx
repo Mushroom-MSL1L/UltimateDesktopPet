@@ -6,7 +6,10 @@ import {
   useState,
 } from "react";
 import { ChatWithPet, PetSprite } from "../wailsjs/go/app/App";
-import { AdjustWindowfromLeftBottom } from "../wailsjs/go/window/WindowService";
+import {
+  AdjustWindowFromBottom,
+  SetDevicePixelRatio,
+} from "../wailsjs/go/window/WindowService";
 import { WindowSetAlwaysOnTop } from "../wailsjs/runtime/runtime";
 import { Pet } from "./components/Pet/Pet";
 import {
@@ -24,16 +27,14 @@ const DEV_TINT_BACKGROUND = "rgba(20, 20, 20, 0.33)";
 const baseAppShellStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  alignItems: "flex-start",
+  alignItems: "center",
   justifyContent: "flex-start",
-  boxSizing: "border-box",
   userSelect: "none",
   pointerEvents: "none",
   backdropFilter: "blur(6px)",
   position: "fixed",
   inset: 0,
   transform: "translateZ(0)",
-  willChange: "transform, opacity",
   background: TRANSPARENT_BACKGROUND,
   backfaceVisibility: "hidden",
 };
@@ -43,7 +44,6 @@ const DIALOG_WINDOW_SIZE = { width: 900, height: 500 };
 
 function App() {
   const [sprite, setSprite] = useState<string>("");
-  const [isFloating, setIsFloating] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [conversation, setConversation] = useState<ConversationMessage[]>([
@@ -57,6 +57,11 @@ function App() {
     left: number;
     top: number;
   } | null>(null);
+  const [isQuickTalkOpen, setIsQuickTalkOpen] = useState(false);
+  const [quickResponseMessage, setQuickResponseMessage] = useState<
+    string | null
+  >(null);
+  const [isResponseBubbleOpen, setIsResponseBubbleOpen] = useState(false);
 
   const isDevMode = import.meta.env.DEV;
   const windowBackground = isDevMode
@@ -70,6 +75,7 @@ function App() {
 
   useEffect(() => {
     let isMounted = true;
+    SetDevicePixelRatio(window.devicePixelRatio);
 
     const htmlElement = document.documentElement;
     const rootElement = document.getElementById("root");
@@ -129,13 +135,12 @@ function App() {
           previousBackgrounds.rootBackgroundColor;
       }
     };
-  }, [windowBackground]);
+  }, []);
 
-  const toggleFloating = () => setIsFloating((prev) => !prev);
   const handleOpenDialog = useCallback(
     (anchor: { left: number; top: number }) => {
       setDialogAnchor(anchor);
-      void AdjustWindowfromLeftBottom(
+      void AdjustWindowFromBottom(
         DIALOG_WINDOW_SIZE.width,
         DIALOG_WINDOW_SIZE.height
       );
@@ -146,20 +151,20 @@ function App() {
   const handleCloseDialog = useCallback(() => {
     setIsDialogOpen(false);
     setDialogAnchor(null);
-    void AdjustWindowfromLeftBottom(
+    void AdjustWindowFromBottom(
       PET_WINDOW_DEFAULT_SIZE.width,
       PET_WINDOW_DEFAULT_SIZE.height
     );
   }, []);
 
-  const handleSendDialogMessage = useCallback(
+  const sendMessage = useCallback(
     async (message: string) => {
       if (isSendingMessage) {
-        return;
+        return null;
       }
       const trimmed = message.trim();
       if (!trimmed) {
-        return;
+        return null;
       }
 
       const userMessage: ConversationMessage = {
@@ -173,24 +178,29 @@ function App() {
 
       try {
         const response = await ChatWithPet(trimmed);
+        const replyText = response ?? "I'm thinking about what to say...";
         setConversation((previous) => [
           ...previous,
           {
             id: `pet-${Date.now()}`,
             role: "pet",
-            text: response ?? "I'm thinking about what to say...",
+            text: replyText,
           },
         ]);
+        return replyText;
       } catch (error) {
         console.error("ChatWithPet failed", error);
+        const fallbackText =
+          "I got distracted and missed that. Can you try again?";
         setConversation((previous) => [
           ...previous,
           {
             id: `pet-${Date.now()}`,
             role: "pet",
-            text: "I got distracted and missed that. Can you try again?",
+            text: fallbackText,
           },
         ]);
+        return fallbackText;
       } finally {
         setIsSendingMessage(false);
       }
@@ -198,13 +208,46 @@ function App() {
     [isSendingMessage]
   );
 
+  const handleSendDialogMessage = useCallback(
+    async (message: string) => {
+      await sendMessage(message);
+    },
+    [sendMessage]
+  );
+
+  const handleSendQuickMessage = useCallback(
+    async (message: string) => {
+      const reply = await sendMessage(message);
+      if (!reply) {
+        return;
+      }
+      setQuickResponseMessage(reply);
+      setIsResponseBubbleOpen(true);
+    },
+    [sendMessage]
+  );
+
+  const handleShowQuickTalk = useCallback(() => {
+    setIsQuickTalkOpen(true);
+  }, []);
+
+  const handleDismissResponseBubble = () => {
+    setIsResponseBubbleOpen(false);
+    setQuickResponseMessage(null);
+  };
+
   return (
     <div style={appShellStyle}>
       <Pet
         sprite={sprite}
-        isFloating={isFloating}
-        onToggleFloating={toggleFloating}
         onOpenDialog={handleOpenDialog}
+        isQuickTalkOpen={isQuickTalkOpen}
+        onSendQuickMessage={handleSendQuickMessage}
+        onRequestQuickTalk={handleShowQuickTalk}
+        isChatBusy={isSendingMessage}
+        quickResponseMessage={quickResponseMessage}
+        isResponseBubbleOpen={isResponseBubbleOpen}
+        onDismissResponseBubble={handleDismissResponseBubble}
       />
 
       <PetDialog
