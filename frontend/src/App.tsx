@@ -8,6 +8,7 @@ import {
 import { ChatWithPet, PetSprite } from "../wailsjs/go/app/App";
 import {
   AdjustWindowFromBottom,
+  AdjustWindowFromLeftBottom,
   SetDevicePixelRatio,
 } from "../wailsjs/go/window/WindowService";
 import { WindowSetAlwaysOnTop } from "../wailsjs/runtime/runtime";
@@ -40,10 +41,12 @@ const baseAppShellStyle: CSSProperties = {
 };
 
 const PET_WINDOW_DEFAULT_SIZE = { width: 150, height: 150 };
+const QUICK_TALK_WINDOW_SIZE = { width: 320, height: 280 };
 const DIALOG_WINDOW_SIZE = { width: 900, height: 500 };
 
 function App() {
   const [sprite, setSprite] = useState<string>("");
+  const [isSpriteMoving, setIsSpriteMoving] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [conversation, setConversation] = useState<ConversationMessage[]>([
@@ -68,10 +71,10 @@ function App() {
     ? DEV_TINT_BACKGROUND
     : TRANSPARENT_BACKGROUND;
 
-  const appShellStyle = useMemo<CSSProperties>(
-    () => ({ ...baseAppShellStyle, background: windowBackground }),
-    [windowBackground]
-  );
+  const appShellStyle = useMemo<CSSProperties>(() => {
+    const alignment = isDialogOpen ? "flex-start" : "center";
+    return { ...baseAppShellStyle, background: windowBackground, alignItems: alignment };
+  }, [windowBackground, isDialogOpen]);
 
   useEffect(() => {
     let isMounted = true;
@@ -140,7 +143,8 @@ function App() {
   const handleOpenDialog = useCallback(
     (anchor: { left: number; top: number }) => {
       setDialogAnchor(anchor);
-      void AdjustWindowFromBottom(
+      setIsQuickTalkOpen(false);
+      void AdjustWindowFromLeftBottom(
         DIALOG_WINDOW_SIZE.width,
         DIALOG_WINDOW_SIZE.height
       );
@@ -151,11 +155,13 @@ function App() {
   const handleCloseDialog = useCallback(() => {
     setIsDialogOpen(false);
     setDialogAnchor(null);
-    void AdjustWindowFromBottom(
-      PET_WINDOW_DEFAULT_SIZE.width,
-      PET_WINDOW_DEFAULT_SIZE.height
-    );
-  }, []);
+    const shouldReopenCard = !isSpriteMoving;
+    setIsQuickTalkOpen(shouldReopenCard);
+    const targetSize = shouldReopenCard
+      ? QUICK_TALK_WINDOW_SIZE
+      : PET_WINDOW_DEFAULT_SIZE;
+    void AdjustWindowFromLeftBottom(targetSize.width, targetSize.height);
+  }, [isSpriteMoving]);
 
   const sendMessage = useCallback(
     async (message: string) => {
@@ -228,13 +234,42 @@ function App() {
   );
 
   const handleShowQuickTalk = useCallback(() => {
-    setIsQuickTalkOpen(true);
-  }, []);
+    setIsQuickTalkOpen((previous) => {
+      if (!previous && !isDialogOpen) {
+        void AdjustWindowFromBottom(
+          QUICK_TALK_WINDOW_SIZE.width,
+          QUICK_TALK_WINDOW_SIZE.height
+        );
+      }
+      return true;
+    });
+  }, [isDialogOpen]);
 
-  const handleDismissResponseBubble = () => {
+  const handleDismissResponseBubble = useCallback(() => {
     setIsResponseBubbleOpen(false);
     setQuickResponseMessage(null);
-  };
+  }, []);
+
+  const handleHideQuickTalk = useCallback(() => {
+    setIsQuickTalkOpen((previous) => {
+      if (previous && !isDialogOpen) {
+        void AdjustWindowFromBottom(
+          PET_WINDOW_DEFAULT_SIZE.width,
+          PET_WINDOW_DEFAULT_SIZE.height
+        );
+      }
+      return false;
+    });
+    handleDismissResponseBubble();
+  }, [handleDismissResponseBubble, isDialogOpen]);
+
+  const handleSpriteMoveStart = useCallback(() => {
+    setIsSpriteMoving(true);
+  }, []);
+
+  const handleSpriteMoveEnd = useCallback(() => {
+    setIsSpriteMoving(false);
+  }, []);
 
   return (
     <div style={appShellStyle}>
@@ -244,10 +279,13 @@ function App() {
         isQuickTalkOpen={isQuickTalkOpen}
         onSendQuickMessage={handleSendQuickMessage}
         onRequestQuickTalk={handleShowQuickTalk}
+        onCloseQuickTalk={handleHideQuickTalk}
         isChatBusy={isSendingMessage}
         quickResponseMessage={quickResponseMessage}
         isResponseBubbleOpen={isResponseBubbleOpen}
         onDismissResponseBubble={handleDismissResponseBubble}
+        onSpriteMoveStart={handleSpriteMoveStart}
+        onSpriteMoveEnd={handleSpriteMoveEnd}
       />
 
       <PetDialog

@@ -1,6 +1,5 @@
 .pet-shell {
   display: flex;
-  align-items: center;
   justify-content: center;
   pointer-events: auto;
   user-select: none;
@@ -75,33 +74,96 @@
   opacity: 1;
 }
 
-.talk-bar {
+.pet-quick-panel {
   --wails-draggable: no-drag;
   position: absolute;
   top: 100%;
   left: 50%;
-  transform: translate(-50%, 8px) scale(0.95);
+  transform: translate(-50%, 14px) scale(0.96);
   opacity: 0;
   pointer-events: none;
-  width: min(240px, 80vw);
+  width: min(280px, 86vw);
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(18, 18, 18, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.pet-quick-panel--open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 18px) scale(1);
+}
+
+.talk-bar {
+  --wails-draggable: no-drag;
+  opacity: 0;
+  pointer-events: none;
+  width: 100%;
+  transform: translateY(-4px);
   transition: opacity 150ms ease, transform 150ms ease;
 }
 
 .talk-bar--open {
   opacity: 1;
   pointer-events: auto;
-  transform: translate(-50%, 16px) scale(1);
+  transform: translateY(0);
+}
+
+.pet-talk-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.pet-talk-actions__button {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f5f5f5;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.pet-talk-actions__button:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pet-talk-actions__button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pet-talk-actions__button--danger {
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.25);
+}
+
+.pet-talk-actions__button--danger:not(:disabled):hover {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.35);
 }
 
 .talk-bar__form {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(15, 15, 15, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
 }
 
 .talk-bar__input {
@@ -128,13 +190,13 @@
 .talk-bar__send-button {
   background: rgba(96, 165, 250, 0.85);
   color: #0f172a;
-  border: none;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  border: 1px solid rgba(96, 165, 250, 0.6);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 120ms ease, opacity 120ms ease;
+  transition: background 120ms ease, opacity 120ms ease, border-color 120ms ease;
 }
 
 .talk-bar__send-button:disabled {
@@ -142,39 +204,7 @@
   cursor: default;
 }
 
-.pet-menu {
-  --wails-draggable: no-drag;
-  position: fixed;
-  min-width: 150px;
-  border-radius: 12px;
-  background: rgba(30, 30, 30, 0.95);
-  color: #f5f5f5;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
-  padding: 6px 0;
-  backdrop-filter: blur(6px);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 20;
-}
-
-.pet-menu__item {
-  background: transparent;
-  border: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  padding: 10px 18px;
-  cursor: pointer;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: background 120ms ease, color 120ms ease;
-}
-
-.pet-menu__item:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.pet-menu__item--danger {
-  color: #fecaca;
+.talk-bar__send-button:not(:disabled):hover {
+  background: rgba(96, 165, 250, 0.92);
+  border-color: rgba(96, 165, 250, 0.85);
 }

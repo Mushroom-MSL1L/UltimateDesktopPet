@@ -1,7 +1,6 @@
 package window
 
 import (
-	pp "UltimateDesktopPet/pkg/print"
 	"context"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -67,8 +66,6 @@ func (w *WindowService) AdjustWindowFromBottom(width, height int) {
 		Height: height,
 	}
 
-	pp.Assert(pp.System, "current bounds: %+v", current)
-	pp.Assert(pp.System, "new bounds:     %+v", newBound)
 	applyWindowBounds(w.ctx, newBound)
 }
 
