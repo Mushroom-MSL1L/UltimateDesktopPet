@@ -4,6 +4,7 @@
   pointer-events: auto;
   user-select: none;
   --wails-draggable: drag;
+  -webkit-app-region: drag;
   position: relative;
 }
 
@@ -33,6 +34,7 @@
 
 .response-bubble {
   --wails-draggable: no-drag;
+  -webkit-app-region: no-drag;
   position: absolute;
   top: 90px;
   left: 55%;
@@ -76,6 +78,7 @@
 
 .pet-quick-panel {
   --wails-draggable: no-drag;
+  -webkit-app-region: no-drag;
   position: absolute;
   top: 100%;
   left: 50%;
@@ -103,6 +106,7 @@
 
 .talk-bar {
   --wails-draggable: no-drag;
+  -webkit-app-region: no-drag;
   opacity: 0;
   pointer-events: none;
   width: 100%;

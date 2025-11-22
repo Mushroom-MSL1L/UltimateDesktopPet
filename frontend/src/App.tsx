@@ -18,10 +18,6 @@ import {
   type ConversationMessage,
 } from "./components/Pet/PetDialog";
 
-const noDragStyle: CSSProperties = {
-  ["--wails-draggable" as any]: "no-drag",
-};
-
 const TRANSPARENT_BACKGROUND = "rgba(0, 0, 0, 0)";
 const DEV_TINT_BACKGROUND = "rgba(20, 20, 20, 0.33)";
 
@@ -73,7 +69,11 @@ function App() {
 
   const appShellStyle = useMemo<CSSProperties>(() => {
     const alignment = isDialogOpen ? "flex-start" : "center";
-    return { ...baseAppShellStyle, background: windowBackground, alignItems: alignment };
+    return {
+      ...baseAppShellStyle,
+      background: windowBackground,
+      alignItems: alignment,
+    };
   }, [windowBackground, isDialogOpen]);
 
   useEffect(() => {

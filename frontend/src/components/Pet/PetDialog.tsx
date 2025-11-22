@@ -9,13 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  ChangeEvent,
-  FormEvent,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
 export type ConversationMessage = {
   id: string;
@@ -97,6 +91,7 @@ export function PetDialog({
         paper: {
           sx: {
             "--wails-draggable": "no-drag",
+            "-webkit-app-region": "no-drag",
             borderRadius: 2,
             backgroundColor: "rgba(24,24,24,0.95)",
             color: "#f5f5f5",
