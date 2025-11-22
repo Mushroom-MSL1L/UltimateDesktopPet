@@ -25,7 +25,7 @@ type Bounds struct {
 
 // WindowService centralizes window sizing logic and exposes it directly to Wails bindings.
 type WindowService struct {
-	ctx    context.Context
+	ctx              context.Context
 	devicePixelRatio float64
 }
 
@@ -52,11 +52,10 @@ func (w *WindowService) AdjustWindowFromLeftBottom(width, height int) {
 		Height: height,
 	}
 
-	applyWindowBounds(w.ctx, newBound)
+	applyWindowBounds(w.ctx, w.ensureWithinScreen(newBound))
 }
 
 func (w *WindowService) AdjustWindowFromBottom(width, height int) {
-
 	current := w.currentBounds()
 
 	newBound := Bounds{
@@ -66,7 +65,7 @@ func (w *WindowService) AdjustWindowFromBottom(width, height int) {
 		Height: height,
 	}
 
-	applyWindowBounds(w.ctx, newBound)
+	applyWindowBounds(w.ctx, w.ensureWithinScreen(newBound))
 }
 
 func (w *WindowService) currentBounds() Bounds {
@@ -79,6 +78,74 @@ func (w *WindowService) currentBounds() Bounds {
 		Height: windowHeight,
 		Top:    windowY,
 	}
+}
+
+func (w *WindowService) ensureWithinScreen(bounds Bounds) Bounds {
+	screenWidth, screenHeight, ok := w.screenSize()
+	if !ok {
+		return bounds
+	}
+
+	if bounds.Width > screenWidth {
+		bounds.Width = screenWidth
+	}
+	if bounds.Height > screenHeight {
+		bounds.Height = screenHeight
+	}
+
+	if bounds.Left < 0 {
+		bounds.Left = 0
+	}
+	if bounds.Top < 0 {
+		bounds.Top = 0
+	}
+
+	if right := float64(bounds.Left)/w.devicePixelRatio + float64(bounds.Width); right > float64(screenWidth) {
+		bounds.Left = int(float64(screenWidth-bounds.Width) * (w.devicePixelRatio))
+	}
+	if bottom := float64(bounds.Top)/w.devicePixelRatio + float64(bounds.Height); bottom > float64(screenHeight) {
+		bounds.Top = int(float64(screenHeight-bounds.Height) * (w.devicePixelRatio))
+	}
+
+	return bounds
+}
+
+func (w *WindowService) screenSize() (int, int, bool) {
+	screens, err := runtime.ScreenGetAll(w.ctx)
+	if err != nil || len(screens) == 0 {
+		return 0, 0, false
+	}
+
+	screen := selectScreen(screens)
+	width := screen.Size.Width
+	height := screen.Size.Height
+
+	if width == 0 || height == 0 {
+		width = screen.Width
+		height = screen.Height
+	}
+
+	if width == 0 || height == 0 {
+		return 0, 0, false
+	}
+
+	return width, height, true
+}
+
+func selectScreen(screens []runtime.Screen) runtime.Screen {
+	for _, screen := range screens {
+		if screen.IsCurrent {
+			return screen
+		}
+	}
+
+	for _, screen := range screens {
+		if screen.IsPrimary {
+			return screen
+		}
+	}
+
+	return screens[0]
 }
 
 func applyWindowBounds(ctx context.Context, bounds Bounds) Bounds {
