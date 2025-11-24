@@ -5,7 +5,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { ChatWithPet } from "../wailsjs/go/app/App";
+import { ChatWithPet } from "../wailsjs/go/chat/ChatMeta";
 import { PetFramesMoveLeft } from "../wailsjs/go/pet/PetMeta";
 import {
   AdjustWindowFromBottom,

@@ -82,6 +82,7 @@ func main() {
 			myapp.PetMeta,
 			myapp.ItemsMeta,
 			myapp.ActivityMeta,
+			myapp.ChatMeta,
 		},
 	})
 

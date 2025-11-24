@@ -28,6 +28,7 @@ const (
 	App             Tag = "App  📦"
 	Items           Tag = "Item 🧸"
 	Activities      Tag = "Act  🎯"
+	Chat            Tag = "Chat 💬"
 )
 
 var (
