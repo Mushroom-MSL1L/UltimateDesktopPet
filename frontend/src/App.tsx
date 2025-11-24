@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ChatWithPet } from "../wailsjs/go/app/App";
+import { ChatWithPet } from "../wailsjs/go/chat/ChatMeta";
 import {
   AdjustWindowFromBottom,
   AdjustWindowFromLeftBottom,

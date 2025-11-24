@@ -9,6 +9,7 @@ frontend/wailsjs
 # system 
 configs/*.yaml
 configs/*.yml
+configs/.env
 assets/db/*.db
 
 # normal local files 
