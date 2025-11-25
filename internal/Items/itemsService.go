@@ -4,7 +4,6 @@ import (
 	"UltimateDesktopPet/internal/database"
 	"UltimateDesktopPet/pkg/file"
 	pp "UltimateDesktopPet/pkg/print"
-	"context"
 	"fmt"
 )
 
@@ -28,12 +27,14 @@ func newItemsController(model **Item) *database.BaseController[Item] {
 	return &database.BaseController[Item]{Model: model}
 }
 
-func (i *ItemsMeta) Service(c context.Context) {
+func NewItemMeta() *ItemsMeta {
+	i := &ItemsMeta{}
 	i.Item = &Item{}
 	i.Controller = newItemsController(&i.Item)
 	i.ST = file.NewSpriteTool(i.ST)
 	i.ST.StaticAssetPath = itemStaticAssetPath
 	i.ST.DefaultImageFolder = itemDefaultImageFolder
+	return i
 }
 
 func (i *ItemsMeta) Shutdown() {
@@ -41,23 +42,31 @@ func (i *ItemsMeta) Shutdown() {
 	pp.Assert(pp.Items, "item service stopped")
 }
 
-func (i *ItemsMeta) LoadAll() ([]ItemWithFrame, error) {
+func (i *ItemsMeta) LoadAll() ([]Item, error) {
 	items, err := i.Controller.ReadAll(i.DB.GetDB())
 	if items == nil {
 		return nil, fmt.Errorf("LoadAll return nil")
 	}
 
-	validItems := make([]ItemWithFrame, 0, len(*items))
+	validItems := make([]Item, 0, len(*items))
 	for _, item := range *items {
-		frame, err := i.ST.LoadFrameFromDir(item.Path)
-		if err != nil {
-			pp.Warn(pp.Items, "LoadAll: item %s cannot load frame: %v", item.Name, err)
-			continue
-		}
-		var temp ItemWithFrame
-		temp.Frame = frame
-		temp.Item = item
-		validItems = append(validItems, temp)
+		validItems = append(validItems, item)
 	}
 	return validItems, err
+}
+
+func (i *ItemsMeta) LoadByID(id uint) (Item, error) {
+	item, err := i.Controller.Read(i.DB.GetDB(), id)
+	if err != nil {
+		return Item{}, err
+	}
+	return *item, nil
+}
+
+func (i *ItemsMeta) LoadFrameByID(id uint) (string, error) {
+	item, err := i.Controller.Read(i.DB.GetDB(), id)
+	if err != nil {
+		return "", err
+	}
+	return i.ST.LoadFrameFromDir(item.Path)
 }

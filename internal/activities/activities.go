@@ -1,6 +1,7 @@
 package activities
 
 type Activity struct {
+	ID             uint   `json:"id"`
 	Path           string `json:"path"`
 	Name           string `json:"name"`
 	Type           string `json:"type"`
@@ -13,9 +14,4 @@ type Activity struct {
 	Money          int    `json:"money"`
 	DurationMinute int16  `json:"duration_minute"`
 	Description    string `json:"description"`
-}
-
-type ActivityWithFrames struct {
-	Activity
-	Frames []string
 }
