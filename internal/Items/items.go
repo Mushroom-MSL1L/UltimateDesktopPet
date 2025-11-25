@@ -1,6 +1,7 @@
 package items
 
 type Item struct {
+	ID          uint   `json:"id"`
 	Path        string `json:"path"`
 	Name        string `json:"name"`
 	Type        string `json:"type"`
@@ -12,9 +13,4 @@ type Item struct {
 	Energy      int16  `json:"energy"`
 	MoneyCost   int    `json:"moneyCost"`
 	Description string `json:"description"`
-}
-
-type ItemWithFrame struct {
-	Item
-	Frame string
 }

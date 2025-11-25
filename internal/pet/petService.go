@@ -1,7 +1,9 @@
 package pet
 
 import (
+	"UltimateDesktopPet/internal/activities"
 	"UltimateDesktopPet/internal/database"
+	"UltimateDesktopPet/internal/items"
 	"UltimateDesktopPet/pkg/file"
 	pp "UltimateDesktopPet/pkg/print"
 	"context"
@@ -24,13 +26,15 @@ const (
 )
 
 type PetMeta struct {
-	Controller   *database.BaseController[Pet]
-	DB           database.DB
-	Pet          *Pet
-	ST           file.SpriteTool
-	Status       PetStatus
-	StatusDetail string
-	DoneSignal   chan struct{}
+	Controller    *database.BaseController[Pet]
+	DB            database.DB
+	Pet           *Pet
+	ST            file.SpriteTool
+	ItemUsing     *items.ItemsMeta
+	ActivityDoing *activities.ActivityMeta
+	Status        PetStatus
+	StatusDetail  string
+	DoneSignal    chan struct{}
 }
 
 func init() {
@@ -43,20 +47,13 @@ func newPetController(model **Pet) *database.BaseController[Pet] {
 	return &database.BaseController[Pet]{Model: model}
 }
 
-func (p *PetMeta) Service(c context.Context) {
-	p.petServiceInit()
+func NewPetMeta(newDB database.DB, itemMeta *items.ItemsMeta, activityMeta *activities.ActivityMeta) *PetMeta {
+	p := &PetMeta{
+		DB:            newDB,
+		ItemUsing:     itemMeta,
+		ActivityDoing: activityMeta,
+	}
 
-	go p.Pet.periodicallyUpdateStates(c)
-	go p.Pet.periodicallyPrintStatus(c)
-}
-
-func (p *PetMeta) Shutdown() {
-	p.storePet()
-	p.DB.CloseDB()
-	pp.Assert(pp.Pet, "pet service stopped")
-}
-
-func (p *PetMeta) petServiceInit() {
 	var err error
 	p.Pet = &Pet{}
 	p.Controller = newPetController(&p.Pet)
@@ -84,10 +81,22 @@ func (p *PetMeta) petServiceInit() {
 			}
 			pp.Info(pp.Pet, "created default pet")
 			p.Pet = defaultPet
-			return
+			return p
 		}
 		pp.Fatal(pp.Pet, "Read first pet entry failed: %v", err)
 	}
+	return p
+}
+
+func (p *PetMeta) Service(c context.Context) {
+	go p.Pet.periodicallyUpdateStates(c)
+	go p.Pet.periodicallyPrintStatus(c)
+}
+
+func (p *PetMeta) Shutdown() {
+	p.storePet()
+	p.DB.CloseDB()
+	pp.Assert(pp.Pet, "pet service stopped")
 }
 
 func (p *PetMeta) storePet() {
@@ -105,6 +114,10 @@ func (p *PetMeta) storePet() {
 
 func (p *PetMeta) LoadDefaultFrames() ([]string, error) {
 	return p.ST.LoadFramesFromDir(defaultPetAnimationType)
+}
+
+func (p *PetMeta) LoadFramesByType(animationType string) ([]string, error) {
+	return p.ST.LoadFramesFromDir(animationType)
 }
 
 func (p *PetMeta) GetPetStatus() Pet {

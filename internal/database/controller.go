@@ -48,7 +48,7 @@ func (b *BaseController[T]) ReadFirst(db *gorm.DB) (*T, error) {
 }
 
 func (b *BaseController[T]) ReadAll(db *gorm.DB) (*[]T, error) {
-if b == nil || b.Model == nil || *b.Model == nil {
+	if b == nil || b.Model == nil || *b.Model == nil {
 		return nil, fmt.Errorf("BaseController or Model is nil")
 	}
 	if db == nil {
