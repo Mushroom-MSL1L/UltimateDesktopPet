@@ -1,6 +1,7 @@
 package pet
 
 import (
+	"UltimateDesktopPet/pkg/attributes.go"
 	"UltimateDesktopPet/pkg/math"
 	pp "UltimateDesktopPet/pkg/print"
 	"context"
@@ -10,14 +11,8 @@ import (
 
 type Pet struct {
 	sync.Mutex
-	ID         uint  `json:"id" gorm:"primaryKey;autoIncrement"`
-	Experience int   `json:"experience"`
-	Water      int16 `json:"water"`
-	Hunger     int16 `json:"hunger"`
-	Health     int16 `json:"health"`
-	Mood       int16 `json:"mood"`
-	Energy     int16 `json:"energy"`
-	Money      int   `json:"money"`
+	ID                    uint `json:"id" gorm:"primaryKey;autoIncrement"`
+	attributes.Attributes `json:"attributes" gorm:"embedded"`
 }
 
 const (
@@ -62,27 +57,28 @@ func (p *Pet) printStatus() {
 }
 
 func (p *Pet) getStatus() Pet {
-	p.Lock()
-	defer p.Unlock()
+	/* Caller should lock the Pet struct */
 	return Pet{
-		Experience: p.Experience,
-		Water:      p.Water,
-		Hunger:     p.Hunger,
-		Health:     p.Health,
-		Mood:       p.Mood,
-		Energy:     p.Energy,
-		Money:      p.Money,
+		ID: p.ID,
+		Attributes: attributes.Attributes{
+			Experience: p.Experience,
+			Water:      p.Water,
+			Hunger:     p.Hunger,
+			Health:     p.Health,
+			Mood:       p.Mood,
+			Energy:     p.Energy,
+			Money:      p.Money,
+		},
 	}
 }
 
-func (p *Pet) updateStatus(expr int, water, hunger, health, mood, energy int16, money int) {
-	p.Lock()
-	defer p.Unlock()
-	p.Experience = p.Experience + expr
-	p.Water = math.InRange(p.Water+water, Max, Min)
-	p.Hunger = math.InRange(p.Hunger+hunger, Max, Min)
-	p.Health = math.InRange(p.Health+health, Max, Min)
-	p.Mood = math.InRange(p.Mood+mood, Max, Min)
-	p.Energy = math.InRange(p.Energy+energy, Max, Min)
-	p.Money = p.Money + money
+func (p *Pet) updateStatus(attr attributes.Attributes) {
+	/* Caller should lock the Pet struct */
+	p.Experience = p.Experience + attr.Experience
+	p.Water = math.InRange(p.Water+attr.Water, Max, Min)
+	p.Hunger = math.InRange(p.Hunger+attr.Hunger, Max, Min)
+	p.Health = math.InRange(p.Health+attr.Health, Max, Min)
+	p.Mood = math.InRange(p.Mood+attr.Mood, Max, Min)
+	p.Energy = math.InRange(p.Energy+attr.Energy, Max, Min)
+	p.Money = p.Money + attr.Money
 }

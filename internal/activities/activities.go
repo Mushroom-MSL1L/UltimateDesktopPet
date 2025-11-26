@@ -1,17 +1,13 @@
 package activities
 
+import "UltimateDesktopPet/pkg/attributes.go"
+
 type Activity struct {
-	ID             uint   `json:"id"`
-	Path           string `json:"path"`
-	Name           string `json:"name"`
-	Type           string `json:"type"`
-	Experience     int    `json:"experience"`
-	Water          int16  `json:"water"`
-	Hunger         int16  `json:"hunger"`
-	Health         int16  `json:"health"`
-	Mood           int16  `json:"mood"`
-	Energy         int16  `json:"energy"`
-	Money          int    `json:"money"`
-	DurationMinute int16  `json:"duration_minute"`
-	Description    string `json:"description"`
+	ID                    uint   `json:"id"`
+	Path                  string `json:"path"`
+	Name                  string `json:"name"`
+	Type                  string `json:"type"`
+	attributes.Attributes `json:"attributes" gorm:"embedded"`
+	DurationMinute        int16  `json:"duration_minute"`
+	Description           string `json:"description"`
 }
