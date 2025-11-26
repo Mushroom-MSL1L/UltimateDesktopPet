@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"strings"
 
 	"UltimateDesktopPet/internal/activities"
 	"UltimateDesktopPet/internal/configLogics"
@@ -18,31 +19,31 @@ import (
 
 type App struct {
 	ctx          context.Context
-	petMeta      *pet.PetMeta
-	itemsMeta    *items.ItemsMeta
-	activityMeta *activities.ActivityMeta
+	PetMeta      *pet.PetMeta
+	ItemsMeta    *items.ItemsMeta
+	ActivityMeta *activities.ActivityMeta
 	configs      *configLogics.System
 }
 
 func NewApp(configPath string) *App {
 	app := &App{
-		petMeta:      &pet.PetMeta{},
-		itemsMeta:    items.NewItemMeta(),
-		activityMeta: activities.NewActivityMeta(),
+		PetMeta:      &pet.PetMeta{},
+		ItemsMeta:    items.NewItemMeta(),
+		ActivityMeta: activities.NewActivityMeta(),
 	}
 	app.ctx = context.Background()
 
 	app.configs = configs.LoadConfig(configPath, &configLogics.System{})
 	sCfg := app.configs
 
-	app.itemsMeta.DB.InitDB(app.ctx, sCfg.StaticAssetsDBDir, database.StaticAssets)
-	app.itemsMeta.ST.SpecifiedImageFolder = sCfg.ItemsImageFolder
-	app.activityMeta.DB.InitDB(app.ctx, sCfg.StaticAssetsDBDir, database.StaticAssets)
-	app.activityMeta.ST.SpecifiedImageFolder = sCfg.ActivitiesImageFolder
+	app.ItemsMeta.DB.InitDB(app.ctx, sCfg.StaticAssetsDBDir, database.StaticAssets)
+	app.ItemsMeta.ST.SpecifiedImageFolder = sCfg.ItemsImageFolder
+	app.ActivityMeta.DB.InitDB(app.ctx, sCfg.StaticAssetsDBDir, database.StaticAssets)
+	app.ActivityMeta.ST.SpecifiedImageFolder = sCfg.ActivitiesImageFolder
 
-	app.petMeta.DB.InitDB(app.ctx, sCfg.UDPDBDir, database.Pets)
-	app.petMeta = pet.NewPetMeta(app.petMeta.DB, app.itemsMeta, app.activityMeta)
-	app.petMeta.ST.SpecifiedImageFolder = sCfg.PetImageFolder
+	app.PetMeta.DB.InitDB(app.ctx, sCfg.UDPDBDir, database.Pets)
+	app.PetMeta = pet.NewPetMeta(app.PetMeta.DB, app.ItemsMeta, app.ActivityMeta)
+	app.PetMeta.ST.SpecifiedImageFolder = sCfg.PetImageFolder
 
 	return app
 }
@@ -53,18 +54,29 @@ func (a *App) Startup(parentCtx context.Context) {
 	pp.Assert(pp.App, "startup")
 
 	/* app services */
-	go a.petMeta.Service(a.ctx)
+	go a.PetMeta.Service(a.ctx)
 }
 
 func (a *App) Shutdown(parentCtx context.Context) {
 	pp.Info(pp.App, "app shutdowning")
-	a.petMeta.Shutdown()
-	a.itemsMeta.Shutdown()
-	a.activityMeta.Shutdown()
+	a.PetMeta.Shutdown()
+	a.ItemsMeta.Shutdown()
+	a.ActivityMeta.Shutdown()
 	pp.Assert(pp.App, "app shutdown complete")
 }
 
 func (a *App) Quit() {
 	pp.Info(pp.App, "app quitting")
 	runtime.Quit(a.ctx)
+}
+
+/* Just a stub function for testing Wails binding */
+func ChatWithPet(userInput string) string {
+	userInput = strings.TrimSpace(userInput)
+	if userInput == "" {
+		return "Please enter a message."
+	}
+	// Dummy response for demonstration purposes
+	response := "You said: " + userInput
+	return response
 }

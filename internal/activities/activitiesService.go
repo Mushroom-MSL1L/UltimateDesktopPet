@@ -1,63 +1,23 @@
 package activities
 
 import (
-	"UltimateDesktopPet/internal/database"
-	"UltimateDesktopPet/pkg/file"
 	pp "UltimateDesktopPet/pkg/print"
 )
 
-const activitiesStaticAssetPath = "assets/activityImages"
-const activitiesDefaultImageFolder = "default"
-
-type ActivityMeta struct {
-	Controller *database.BaseController[Activity]
-	DB         database.DB
-	Activity   *Activity
-	ST         file.SpriteTool
-}
-
-func init() {
-	a := newActivityController(nil)
-	database.RegisterSchema(database.StaticAssets, a)
-	pp.Assert(pp.Activities, "Activities init complete")
-}
-
-func newActivityController(model **Activity) *database.BaseController[Activity] {
-	return &database.BaseController[Activity]{Model: model}
-}
-
-func NewActivityMeta() *ActivityMeta {
-	a := &ActivityMeta{}
-	a.Activity = &Activity{}
-	a.Controller = newActivityController(&a.Activity)
-	a.ST = file.NewSpriteTool(a.ST)
-	a.ST.StaticAssetPath = activitiesStaticAssetPath
-	a.ST.DefaultImageFolder = activitiesDefaultImageFolder
-	return a
-}
-
-func (a *ActivityMeta) Shutdown() {
-	a.DB.CloseDB()
-	pp.Assert(pp.Activities, "activities service stopped")
-}
-
-func (a *ActivityMeta) LoadAll() ([]Activity, error) {
-	activities, err := a.Controller.ReadAll(a.DB.GetDB())
+func (a *ActivityMeta) LoadAllActivities() ([]Activity, error) {
+	activities, err := a.LoadAll()
 	if err != nil {
+		pp.Warn(pp.Activities, "LoadAllActivities: failed to load all activities: %v", err)
 		return nil, err
 	}
-
-	validActivities := make([]Activity, 0, len(*activities))
-	for _, acti := range *activities {
-		validActivities = append(validActivities, acti)
-	}
-	return validActivities, err
+	return activities, err
 }
 
-func (a *ActivityMeta) LoadFramesByID(id uint) ([]string, error) {
-	activity, err := a.Controller.Read(a.DB.GetDB(), id)
+func (a *ActivityMeta) LoadActivityFramesByID(id uint) ([]string, error) {
+	frames, err := a.LoadFramesByID(id)
 	if err != nil {
+		pp.Warn(pp.Activities, "LoadActivityFramesByID: failed to load frames for activity ID %d: %v", id, err)
 		return nil, err
 	}
-	return a.ST.LoadFramesFromDir(activity.Path)
+	return frames, nil
 }

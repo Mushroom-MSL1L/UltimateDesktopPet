@@ -1,50 +1,14 @@
 package items
 
 import (
-	"UltimateDesktopPet/internal/database"
-	"UltimateDesktopPet/pkg/file"
 	pp "UltimateDesktopPet/pkg/print"
 	"fmt"
 )
 
-type ItemsMeta struct {
-	Controller *database.BaseController[Item]
-	DB         database.DB
-	Item       *Item
-	ST         file.SpriteTool
-}
-
-const itemStaticAssetPath = "assets/itemImages"
-const itemDefaultImageFolder = "default"
-
-func init() {
-	i := newItemsController(nil)
-	database.RegisterSchema(database.StaticAssets, i)
-	pp.Assert(pp.Items, "items init complete")
-}
-
-func newItemsController(model **Item) *database.BaseController[Item] {
-	return &database.BaseController[Item]{Model: model}
-}
-
-func NewItemMeta() *ItemsMeta {
-	i := &ItemsMeta{}
-	i.Item = &Item{}
-	i.Controller = newItemsController(&i.Item)
-	i.ST = file.NewSpriteTool(i.ST)
-	i.ST.StaticAssetPath = itemStaticAssetPath
-	i.ST.DefaultImageFolder = itemDefaultImageFolder
-	return i
-}
-
-func (i *ItemsMeta) Shutdown() {
-	i.DB.CloseDB()
-	pp.Assert(pp.Items, "item service stopped")
-}
-
-func (i *ItemsMeta) LoadAll() ([]Item, error) {
+func (i *ItemsMeta) LoadAllItems() ([]Item, error) {
 	items, err := i.Controller.ReadAll(i.DB.GetDB())
 	if items == nil {
+		pp.Warn(pp.Items, "LoadAllItems: failed to load all items: %v", err)
 		return nil, fmt.Errorf("LoadAll return nil")
 	}
 
@@ -52,10 +16,10 @@ func (i *ItemsMeta) LoadAll() ([]Item, error) {
 	for _, item := range *items {
 		validItems = append(validItems, item)
 	}
-	return validItems, err
+	return validItems, nil
 }
 
-func (i *ItemsMeta) LoadByID(id uint) (Item, error) {
+func (i *ItemsMeta) LoadItemByID(id uint) (Item, error) {
 	item, err := i.Controller.Read(i.DB.GetDB(), id)
 	if err != nil {
 		return Item{}, err
@@ -63,10 +27,16 @@ func (i *ItemsMeta) LoadByID(id uint) (Item, error) {
 	return *item, nil
 }
 
-func (i *ItemsMeta) LoadFrameByID(id uint) (string, error) {
+func (i *ItemsMeta) LoadItemFrameByID(id uint) (string, error) {
 	item, err := i.Controller.Read(i.DB.GetDB(), id)
 	if err != nil {
 		return "", err
 	}
-	return i.ST.LoadFrameFromDir(item.Path)
+	frame, err := i.ST.LoadFrameFromDir(item.Path)
+	if err != nil {
+		pp.Warn(pp.Items, "LoadItemFrameByID: failed to load frame for item ID %d: %v", id, err)
+		return "", err
+	}
+	return frame, nil
+
 }

@@ -8,7 +8,7 @@ INSERT INTO `items` (
     `health`,
     `mood`,
     `energy`,
-    `money_cost`,
+    `money`,
     `description`
 )
 VALUES 

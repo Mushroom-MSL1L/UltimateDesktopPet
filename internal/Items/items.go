@@ -1,16 +1,12 @@
 package items
 
+import "UltimateDesktopPet/pkg/attributes.go"
+
 type Item struct {
-	ID          uint   `json:"id"`
-	Path        string `json:"path"`
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Experience  int    `json:"experience"`
-	Water       int16  `json:"water"`
-	Hunger      int16  `json:"hunger"`
-	Health      int16  `json:"health"`
-	Mood        int16  `json:"mood"`
-	Energy      int16  `json:"energy"`
-	MoneyCost   int    `json:"moneyCost"`
-	Description string `json:"description"`
+	ID                    uint   `json:"id"`
+	Path                  string `json:"path"`
+	Name                  string `json:"name"`
+	Type                  string `json:"type"`
+	attributes.Attributes `json:"attributes" gorm:"embedded"`
+	Description           string `json:"description"`
 }

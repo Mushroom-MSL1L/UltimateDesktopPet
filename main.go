@@ -79,6 +79,9 @@ func main() {
 		Bind: []interface{}{
 			myapp,
 			windowService,
+			myapp.PetMeta,
+			myapp.ItemsMeta,
+			myapp.ActivityMeta,
 		},
 	})
 
