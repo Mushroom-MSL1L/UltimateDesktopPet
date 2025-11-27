@@ -11,6 +11,7 @@ configs/*.yaml
 configs/*.yml
 configs/.env
 assets/db/*.db
+configs/.env
 
 # normal local files 
 .DS_Store
