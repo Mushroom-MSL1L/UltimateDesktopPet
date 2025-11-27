@@ -34,7 +34,6 @@ func NewApp(configPath string) *App {
 		ActivityMeta: activities.NewActivityMeta(),
 	}
 	app.ctx = context.Background()
-	app.ChatMeta = chat.NewChatMeta(app.ctx)
 
 	app.configs = configs.LoadConfig(configPath, &configLogics.System{})
 	sCfg := app.configs
@@ -45,9 +44,12 @@ func NewApp(configPath string) *App {
 	app.ActivityMeta.ST.SpecifiedImageFolder = sCfg.ActivitiesImageFolder
 
 	app.PetMeta.DB.InitDB(app.ctx, sCfg.UDPDBDir, database.Pets)
-	app.ChatMeta.DB.InitDB(app.ctx, sCfg.UDPDBDir, database.Pets)
 	app.PetMeta = pet.NewPetMeta(app.PetMeta.DB, app.ItemsMeta, app.ActivityMeta)
 	app.PetMeta.ST.SpecifiedImageFolder = sCfg.PetImageFolder
+
+	app.ChatMeta = chat.NewChatMeta(app.ctx)
+	app.ChatMeta.DB.InitDB(app.ctx, sCfg.UDPDBDir, database.Pets)
+	app.ChatMeta.RolePlayContext = sCfg.ChatRolePlayContext
 
 	return app
 }
