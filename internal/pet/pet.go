@@ -1,7 +1,7 @@
 package pet
 
 import (
-	"UltimateDesktopPet/pkg/attributes.go"
+	"UltimateDesktopPet/internal/attributes"
 	"UltimateDesktopPet/pkg/math"
 	pp "UltimateDesktopPet/pkg/print"
 	"context"

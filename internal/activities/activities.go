@@ -1,6 +1,6 @@
 package activities
 
-import "UltimateDesktopPet/pkg/attributes.go"
+import "UltimateDesktopPet/internal/attributes"
 
 type Activity struct {
 	ID                    uint   `json:"id"`

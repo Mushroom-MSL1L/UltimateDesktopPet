@@ -2,9 +2,9 @@ package pet
 
 import (
 	"UltimateDesktopPet/internal/activities"
+	"UltimateDesktopPet/internal/attributes"
 	"UltimateDesktopPet/internal/database"
 	"UltimateDesktopPet/internal/items"
-	"UltimateDesktopPet/pkg/attributes.go"
 	"UltimateDesktopPet/pkg/file"
 	pp "UltimateDesktopPet/pkg/print"
 	"context"
