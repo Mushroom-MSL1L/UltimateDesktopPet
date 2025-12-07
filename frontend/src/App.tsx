@@ -3,10 +3,10 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { ChatWithPet } from "../wailsjs/go/app/App";
-import { PetFramesMoveLeft } from "../wailsjs/go/pet/PetMeta";
 import {
   AdjustWindowFromBottom,
   AdjustWindowFromLeftBottom,
@@ -18,6 +18,19 @@ import {
   PetDialog,
   type ConversationMessage,
 } from "./components/Pet/PetDialog";
+import {
+  SpriteAnimationKey,
+  type SpriteFramesCache,
+  ensureAnimationFrames,
+  preloadAnimations,
+} from "./utils/spriteFrames";
+import {
+  WanderDirection,
+  randomWanderDirection,
+  wanderAnimationByDirection,
+  wanderDirectionVectors,
+} from "./utils/wander";
+import { moveWindowWithinScreen } from "./utils/windowPosition";
 
 const TRANSPARENT_BACKGROUND = "rgba(0, 0, 0, 0)";
 const DEV_TINT_BACKGROUND = "rgba(20, 20, 20, 0.33)";
@@ -41,11 +54,17 @@ const PET_WINDOW_DEFAULT_SIZE = { width: 150, height: 150 };
 const QUICK_TALK_WINDOW_SIZE = { width: 320, height: 280 };
 const DIALOG_WINDOW_SIZE = { width: 900, height: 500 };
 const SPRITE_FRAME_DURATION_MS = 150;
+const IDLE_WANDER_DELAY_MS = 5000;
+const WANDER_STEP_DISTANCE_PX = 8;
+const WANDER_STEP_INTERVAL_MS = 120;
+const WANDER_DIRECTION_CHANGE_MS = 2600;
+const INTERACTION_DEBOUNCE_MS = 120;
 
 function App() {
   const [sprite, setSprite] = useState<string>("");
   const [petFrames, setPetFrames] = useState<string[]>([]);
   const [isSpriteMoving, setIsSpriteMoving] = useState(false);
+  const [isWandering, setIsWandering] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [conversation, setConversation] = useState<ConversationMessage[]>([
@@ -64,6 +83,18 @@ function App() {
     string | null
   >(null);
   const [isResponseBubbleOpen, setIsResponseBubbleOpen] = useState(false);
+  const framesCacheRef = useRef<SpriteFramesCache>({});
+  const isMountedRef = useRef(true);
+  const idleTimerRef = useRef<number | null>(null);
+  const wanderStepTimerRef = useRef<number | null>(null);
+  const wanderDirectionTimerRef = useRef<number | null>(null);
+  const wanderDirectionRef = useRef<WanderDirection>("left");
+  const isWanderingRef = useRef(false);
+  const lastInteractionRef = useRef<number>(Date.now());
+  const interactionPausedRef = useRef(false);
+  const animationRequestIdRef = useRef(0);
+  const scheduleIdleTimerRef = useRef<() => void>(() => {});
+  const startWanderingRef = useRef<() => void>(() => {});
 
   const isDevMode = import.meta.env.DEV;
   const windowBackground = isDevMode
@@ -79,8 +110,154 @@ function App() {
     };
   }, [windowBackground, isDialogOpen]);
 
+  const clearIdleTimer = useCallback(() => {
+    if (idleTimerRef.current !== null) {
+      window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+  }, []);
+
+  const clearWanderTimers = useCallback(() => {
+    if (wanderStepTimerRef.current !== null) {
+      window.clearInterval(wanderStepTimerRef.current);
+      wanderStepTimerRef.current = null;
+    }
+    if (wanderDirectionTimerRef.current !== null) {
+      window.clearTimeout(wanderDirectionTimerRef.current);
+      wanderDirectionTimerRef.current = null;
+    }
+  }, []);
+
+  const applyAnimationFrames = useCallback(
+    async (animation: SpriteAnimationKey) => {
+      const requestId = animationRequestIdRef.current + 1;
+      animationRequestIdRef.current = requestId;
+
+      const frames = await ensureAnimationFrames(
+        animation,
+        framesCacheRef.current
+      );
+
+      if (!isMountedRef.current || requestId !== animationRequestIdRef.current) {
+        return;
+      }
+
+      setPetFrames((previous) => {
+        if (frames.length > 0) {
+          return frames;
+        }
+        const fallback =
+          framesCacheRef.current.stand ??
+          framesCacheRef.current.move_left ??
+          previous;
+        return fallback ?? previous;
+      });
+    },
+    []
+  );
+
+  const setWanderDirection = useCallback(
+    (direction: WanderDirection) => {
+      wanderDirectionRef.current = direction;
+      void applyAnimationFrames(wanderAnimationByDirection[direction]);
+    },
+    [applyAnimationFrames]
+  );
+
+  const stopWandering = useCallback(() => {
+    if (!isWanderingRef.current) {
+      return;
+    }
+    clearWanderTimers();
+    isWanderingRef.current = false;
+    setIsWandering(false);
+    void applyAnimationFrames("stand");
+  }, [applyAnimationFrames, clearWanderTimers]);
+
+  const performWanderStep: () => Promise<void> = useCallback(async () => {
+    if (!isWanderingRef.current) {
+      return;
+    }
+    const direction = wanderDirectionRef.current;
+    const delta = wanderDirectionVectors[direction];
+    const moveResult = await moveWindowWithinScreen(
+      delta.x * WANDER_STEP_DISTANCE_PX,
+      delta.y * WANDER_STEP_DISTANCE_PX
+    );
+    if (!moveResult) {
+      stopWandering();
+      scheduleIdleTimerRef.current();
+      return;
+    }
+    if (!moveResult.didMove) {
+      setWanderDirection(randomWanderDirection(direction));
+    }
+  }, [setWanderDirection, stopWandering]);
+
+  const scheduleDirectionChange: () => void = useCallback(() => {
+    if (wanderDirectionTimerRef.current !== null) {
+      window.clearTimeout(wanderDirectionTimerRef.current);
+      wanderDirectionTimerRef.current = null;
+    }
+    wanderDirectionTimerRef.current = window.setTimeout(() => {
+      const nextDirection = randomWanderDirection(
+        wanderDirectionRef.current ?? "left"
+      );
+      setWanderDirection(nextDirection);
+      scheduleDirectionChange();
+    }, WANDER_DIRECTION_CHANGE_MS);
+  }, [setWanderDirection]);
+
+  const startWandering: () => void = useCallback(() => {
+    if (interactionPausedRef.current || isWanderingRef.current) {
+      return;
+    }
+    clearIdleTimer();
+    clearWanderTimers();
+    isWanderingRef.current = true;
+    setIsWandering(true);
+    const nextDirection = randomWanderDirection();
+    setWanderDirection(nextDirection);
+
+    wanderStepTimerRef.current = window.setInterval(() => {
+      void performWanderStep();
+    }, WANDER_STEP_INTERVAL_MS);
+
+    scheduleDirectionChange();
+  }, [
+    clearIdleTimer,
+    clearWanderTimers,
+    performWanderStep,
+    scheduleDirectionChange,
+    setWanderDirection,
+  ]);
+
+  const scheduleIdleTimer: () => void = useCallback(() => {
+    if (interactionPausedRef.current) {
+      clearIdleTimer();
+      return;
+    }
+    clearIdleTimer();
+    idleTimerRef.current = window.setTimeout(() => {
+      startWanderingRef.current();
+    }, IDLE_WANDER_DELAY_MS);
+  }, [clearIdleTimer]);
+
+  startWanderingRef.current = startWandering;
+  scheduleIdleTimerRef.current = scheduleIdleTimer;
+
+  const registerInteraction = useCallback(() => {
+    const now = Date.now();
+    if (now - lastInteractionRef.current < INTERACTION_DEBOUNCE_MS) {
+      return;
+    }
+    lastInteractionRef.current = now;
+    stopWandering();
+    scheduleIdleTimer();
+  }, [scheduleIdleTimer, stopWandering]);
+
   useEffect(() => {
-    let isMounted = true;
+    isMountedRef.current = true;
     SetDevicePixelRatio(window.devicePixelRatio);
 
     const htmlElement = document.documentElement;
@@ -111,24 +288,24 @@ function App() {
     applyBackground(htmlElement, windowBackground);
     applyBackground(rootElement, windowBackground);
 
-    console.log(
-      "body background:",
-      getComputedStyle(document.body).backgroundColor
-    );
-
     WindowSetAlwaysOnTop(true);
 
-    PetFramesMoveLeft()
-      .then((frames) => {
-        if (!isMounted) {
+    preloadAnimations(["stand", "move_left", "move_right", "move_far"])
+      .then((cache) => {
+        if (!isMountedRef.current) {
           return;
         }
-        setPetFrames(frames ?? []);
+        framesCacheRef.current = cache;
+        const hasStandFrames = (cache.stand?.length ?? 0) > 0;
+        const initialAnimation: SpriteAnimationKey = hasStandFrames
+          ? "stand"
+          : "move_left";
+        void applyAnimationFrames(initialAnimation);
       })
       .catch((err) => console.error("Pet frames failed to load", err));
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
 
       document.body.style.background = previousBackgrounds.bodyBackground;
       document.body.style.backgroundColor =
@@ -142,7 +319,45 @@ function App() {
           previousBackgrounds.rootBackgroundColor;
       }
     };
-  }, []);
+  }, [applyAnimationFrames, windowBackground]);
+
+  useEffect(() => {
+    interactionPausedRef.current =
+      isDialogOpen || isQuickTalkOpen || isSpriteMoving;
+    if (interactionPausedRef.current) {
+      stopWandering();
+      clearIdleTimer();
+      return;
+    }
+    scheduleIdleTimer();
+  }, [
+    clearIdleTimer,
+    isDialogOpen,
+    isQuickTalkOpen,
+    isSpriteMoving,
+    scheduleIdleTimer,
+    stopWandering,
+  ]);
+
+  useEffect(() => {
+    const handleUserAction = () => registerInteraction();
+    const events: (keyof WindowEventMap)[] = [
+      "pointerdown",
+      "pointermove",
+      "touchstart",
+      "keydown",
+      "wheel",
+    ];
+    events.forEach((eventName) =>
+      window.addEventListener(eventName, handleUserAction, { passive: true })
+    );
+
+    return () => {
+      events.forEach((eventName) =>
+        window.removeEventListener(eventName, handleUserAction)
+      );
+    };
+  }, [registerInteraction]);
 
   useEffect(() => {
     if (petFrames.length === 0) {
@@ -167,8 +382,16 @@ function App() {
     };
   }, [petFrames]);
 
+  useEffect(() => {
+    return () => {
+      clearIdleTimer();
+      clearWanderTimers();
+    };
+  }, [clearIdleTimer, clearWanderTimers]);
+
   const handleOpenDialog = useCallback(
     (anchor: { left: number; top: number }) => {
+      registerInteraction();
       setDialogAnchor(anchor);
       setIsQuickTalkOpen(false);
       void AdjustWindowFromLeftBottom(
@@ -177,21 +400,23 @@ function App() {
       );
       setIsDialogOpen(true);
     },
-    []
+    [registerInteraction]
   );
   const handleCloseDialog = useCallback(() => {
+    registerInteraction();
     setIsDialogOpen(false);
     setDialogAnchor(null);
-    const shouldReopenCard = !isSpriteMoving;
+    const shouldReopenCard = !isSpriteMoving && !isWandering;
     setIsQuickTalkOpen(shouldReopenCard);
     const targetSize = shouldReopenCard
       ? QUICK_TALK_WINDOW_SIZE
       : PET_WINDOW_DEFAULT_SIZE;
     void AdjustWindowFromLeftBottom(targetSize.width, targetSize.height);
-  }, [isSpriteMoving]);
+  }, [isSpriteMoving, isWandering, registerInteraction]);
 
   const sendMessage = useCallback(
     async (message: string) => {
+      registerInteraction();
       if (isSendingMessage) {
         return null;
       }
@@ -238,7 +463,7 @@ function App() {
         setIsSendingMessage(false);
       }
     },
-    [isSendingMessage]
+    [isSendingMessage, registerInteraction]
   );
 
   const handleSendDialogMessage = useCallback(
@@ -261,6 +486,7 @@ function App() {
   );
 
   const handleShowQuickTalk = useCallback(() => {
+    registerInteraction();
     setIsQuickTalkOpen((previous) => {
       if (!previous && !isDialogOpen) {
         void AdjustWindowFromBottom(
@@ -270,14 +496,16 @@ function App() {
       }
       return true;
     });
-  }, [isDialogOpen]);
+  }, [isDialogOpen, registerInteraction]);
 
   const handleDismissResponseBubble = useCallback(() => {
+    registerInteraction();
     setIsResponseBubbleOpen(false);
     setQuickResponseMessage(null);
-  }, []);
+  }, [registerInteraction]);
 
   const handleHideQuickTalk = useCallback(() => {
+    registerInteraction();
     setIsQuickTalkOpen((previous) => {
       if (previous && !isDialogOpen) {
         void AdjustWindowFromBottom(
@@ -288,15 +516,17 @@ function App() {
       return false;
     });
     handleDismissResponseBubble();
-  }, [handleDismissResponseBubble, isDialogOpen]);
+  }, [handleDismissResponseBubble, isDialogOpen, registerInteraction]);
 
   const handleSpriteMoveStart = useCallback(() => {
+    registerInteraction();
     setIsSpriteMoving(true);
-  }, []);
+  }, [registerInteraction]);
 
   const handleSpriteMoveEnd = useCallback(() => {
+    registerInteraction();
     setIsSpriteMoving(false);
-  }, []);
+  }, [registerInteraction]);
 
   return (
     <div style={appShellStyle}>
@@ -313,6 +543,7 @@ function App() {
         onDismissResponseBubble={handleDismissResponseBubble}
         onSpriteMoveStart={handleSpriteMoveStart}
         onSpriteMoveEnd={handleSpriteMoveEnd}
+        onUserInteraction={registerInteraction}
       />
 
       <PetDialog
