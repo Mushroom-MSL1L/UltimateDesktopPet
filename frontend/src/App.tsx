@@ -5,7 +5,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import { ChatWithPet, PetSprite } from "../wailsjs/go/app/App";
+import { ChatWithPet } from "../wailsjs/go/app/App";
+import { PetFramesMoveLeft } from "../wailsjs/go/pet/PetMeta";
 import {
   AdjustWindowFromBottom,
   AdjustWindowFromLeftBottom,
@@ -39,9 +40,11 @@ const baseAppShellStyle: CSSProperties = {
 const PET_WINDOW_DEFAULT_SIZE = { width: 150, height: 150 };
 const QUICK_TALK_WINDOW_SIZE = { width: 320, height: 280 };
 const DIALOG_WINDOW_SIZE = { width: 900, height: 500 };
+const SPRITE_FRAME_DURATION_MS = 150;
 
 function App() {
   const [sprite, setSprite] = useState<string>("");
+  const [petFrames, setPetFrames] = useState<string[]>([]);
   const [isSpriteMoving, setIsSpriteMoving] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
@@ -115,13 +118,14 @@ function App() {
 
     WindowSetAlwaysOnTop(true);
 
-    PetSprite()
-      .then((data) => {
-        if (isMounted) {
-          setSprite(data);
+    PetFramesMoveLeft()
+      .then((frames) => {
+        if (!isMounted) {
+          return;
         }
+        setPetFrames(frames ?? []);
       })
-      .catch((err) => console.error("Pet sprite failed to load", err));
+      .catch((err) => console.error("Pet frames failed to load", err));
 
     return () => {
       isMounted = false;
@@ -139,6 +143,29 @@ function App() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (petFrames.length === 0) {
+      setSprite("");
+      return;
+    }
+
+    let frameIndex = 0;
+    setSprite(petFrames[frameIndex]);
+
+    if (petFrames.length === 1) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      frameIndex = (frameIndex + 1) % petFrames.length;
+      setSprite(petFrames[frameIndex]);
+    }, SPRITE_FRAME_DURATION_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [petFrames]);
 
   const handleOpenDialog = useCallback(
     (anchor: { left: number; top: number }) => {
