@@ -21,6 +21,7 @@ type PetProps = {
   onDismissResponseBubble: () => void;
   onSpriteMoveStart?: () => void;
   onSpriteMoveEnd?: () => void;
+  onUserInteraction?: () => void;
 };
 
 export function Pet({
@@ -36,8 +37,13 @@ export function Pet({
   onDismissResponseBubble,
   onSpriteMoveStart,
   onSpriteMoveEnd,
+  onUserInteraction,
 }: PetProps) {
   const spriteRef = useRef<HTMLImageElement | null>(null);
+
+  const notifyInteraction = useCallback(() => {
+    onUserInteraction?.();
+  }, [onUserInteraction]);
 
   const computeAnchorPosition = useCallback(() => {
     const spriteNode = spriteRef.current;
@@ -54,15 +60,18 @@ export function Pet({
   const handleContextMenu = (event: ReactMouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    notifyInteraction();
     onRequestQuickTalk?.();
   };
 
   const handleQuit = () => {
+    notifyInteraction();
     void QuitFromApp();
     console.log("Quit called from App");
   };
 
   const handleOpenDialog = () => {
+    notifyInteraction();
     const anchor = computeAnchorPosition();
     onOpenDialog(anchor);
   };
@@ -71,6 +80,7 @@ export function Pet({
     if (event.button !== 0) {
       return;
     }
+    notifyInteraction();
     const target = event.target;
     if (!(target instanceof Element)) {
       return;
@@ -87,10 +97,12 @@ export function Pet({
   };
 
   const handleShellMouseUp = () => {
+    notifyInteraction();
     onSpriteMoveEnd?.();
   };
 
   const handleShellMouseLeave = () => {
+    notifyInteraction();
     onSpriteMoveEnd?.();
   };
 
