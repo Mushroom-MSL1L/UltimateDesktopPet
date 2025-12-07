@@ -24,7 +24,7 @@ type ResponseBubbleProps = {
 export function ResponseBubble({
   message,
   open,
-  duration = 40000,
+  duration = 6000,
   onDismiss,
 }: ResponseBubbleProps) {
   const [renderedMessage, setRenderedMessage] = useState<string | null>(() =>

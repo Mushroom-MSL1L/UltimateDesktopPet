@@ -71,7 +71,7 @@ func (a *App) Quit() {
 }
 
 /* Just a stub function for testing Wails binding */
-func ChatWithPet(userInput string) string {
+func (a *App) ChatWithPet(userInput string) string {
 	userInput = strings.TrimSpace(userInput)
 	if userInput == "" {
 		return "Please enter a message."
