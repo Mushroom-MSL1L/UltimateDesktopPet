@@ -43,6 +43,8 @@ func NewApp(configPath string) *App {
 	app.ActivityMeta.DB.InitDB(app.ctx, sCfg.StaticAssetsDBDir, database.StaticAssets)
 	app.ActivityMeta.ST.SpecifiedImageFolder = sCfg.ActivitiesImageFolder
 
+	app.ItemsMeta.DB.LoadSQLFileIfEmpty(sCfg.StaticAssetsSQLDir)
+
 	app.PetMeta.DB.InitDB(app.ctx, sCfg.UDPDBDir, database.Pets)
 	app.PetMeta = pet.NewPetMeta(app.PetMeta.DB, app.ItemsMeta, app.ActivityMeta)
 	app.PetMeta.ST.SpecifiedImageFolder = sCfg.PetImageFolder
