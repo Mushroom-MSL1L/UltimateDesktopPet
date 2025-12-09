@@ -2,9 +2,10 @@ package app
 
 import (
 	"context"
-	"strings"
 
 	"UltimateDesktopPet/internal/activities"
+	"UltimateDesktopPet/internal/chat"
+	_ "UltimateDesktopPet/internal/chat"
 	"UltimateDesktopPet/internal/configLogics"
 	"UltimateDesktopPet/internal/database"
 	"UltimateDesktopPet/internal/items"
@@ -23,6 +24,7 @@ type App struct {
 	ItemsMeta    *items.ItemsMeta
 	ActivityMeta *activities.ActivityMeta
 	configs      *configLogics.System
+	ChatMeta     *chat.ChatMeta
 }
 
 func NewApp(configPath string) *App {
@@ -45,6 +47,10 @@ func NewApp(configPath string) *App {
 	app.PetMeta = pet.NewPetMeta(app.PetMeta.DB, app.ItemsMeta, app.ActivityMeta)
 	app.PetMeta.ST.SpecifiedImageFolder = sCfg.PetImageFolder
 
+	app.ChatMeta = chat.NewChatMeta(app.ctx)
+	app.ChatMeta.DB.InitDB(app.ctx, sCfg.UDPDBDir, database.Pets)
+	app.ChatMeta.RolePlayContext = sCfg.ChatRolePlayContext
+
 	return app
 }
 
@@ -62,21 +68,11 @@ func (a *App) Shutdown(parentCtx context.Context) {
 	a.PetMeta.Shutdown()
 	a.ItemsMeta.Shutdown()
 	a.ActivityMeta.Shutdown()
+	a.ChatMeta.Shutdown()
 	pp.Assert(pp.App, "app shutdown complete")
 }
 
 func (a *App) Quit() {
 	pp.Info(pp.App, "app quitting")
 	runtime.Quit(a.ctx)
-}
-
-/* Just a stub function for testing Wails binding */
-func (a *App) ChatWithPet(userInput string) string {
-	userInput = strings.TrimSpace(userInput)
-	if userInput == "" {
-		return "Please enter a message."
-	}
-	// Dummy response for demonstration purposes
-	response := "You said: " + userInput
-	return response
 }
