@@ -2,7 +2,7 @@
 
 * There're 2 subproject in to repo
     * desktop_pet : for user side desktop pet application 
-    * synchronization_remote_server : for developer maintain the synchronization server 
+    * sync_server : for developer maintain the synchronization server 
 ## Modules 
 * UI : [wails](https://github.com/wailsapp/wails)
 * Framework : [gin](https://github.com/gin-gonic/gin)
