@@ -91,7 +91,7 @@ export function PetDialog({
         paper: {
           sx: {
             "--wails-draggable": "no-drag",
-            "-webkit-app-region": "no-drag",
+            WebkitAppRegion: "no-drag",
             borderRadius: 2,
             backgroundColor: "rgba(24,24,24,0.95)",
             color: "#f5f5f5",

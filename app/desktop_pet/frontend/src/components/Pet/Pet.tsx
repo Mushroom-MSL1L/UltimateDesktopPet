@@ -3,6 +3,7 @@ import { Quit as QuitFromApp } from "../../../wailsjs/go/app/App";
 import "./Pet.css";
 import { TalkBar } from "./TalkBar";
 import { ResponseBubble } from "./ResponseBubble";
+import { PetStatusBars } from "./PetStatusBars";
 
 const ANCHOR_OFFSET_X = 16;
 
@@ -155,6 +156,7 @@ export function Pet({
           onSend={onSendQuickMessage}
           disabled={isChatBusy}
         />
+        <PetStatusBars open={isQuickTalkOpen} />
       </div>
     </div>
   );

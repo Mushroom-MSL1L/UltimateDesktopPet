@@ -51,7 +51,7 @@ const baseAppShellStyle: CSSProperties = {
 };
 
 const PET_WINDOW_DEFAULT_SIZE = { width: 150, height: 150 };
-const QUICK_TALK_WINDOW_SIZE = { width: 320, height: 280 };
+const QUICK_TALK_WINDOW_SIZE = { width: 320, height: 500 };
 const DIALOG_WINDOW_SIZE = { width: 900, height: 500 };
 const SPRITE_FRAME_DURATION_MS = 150;
 const IDLE_WANDER_DELAY_MS = 5000;
@@ -138,7 +138,10 @@ function App() {
         framesCacheRef.current
       );
 
-      if (!isMountedRef.current || requestId !== animationRequestIdRef.current) {
+      if (
+        !isMountedRef.current ||
+        requestId !== animationRequestIdRef.current
+      ) {
         return;
       }
 

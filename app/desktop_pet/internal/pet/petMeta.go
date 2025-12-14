@@ -117,7 +117,10 @@ func (p *PetMeta) storePet() {
 }
 
 func (p *PetMeta) GetPetStatus() Pet {
-	return (*p.Pet).getStatus()
+	p.Pet.Lock()
+	defer p.Pet.Unlock()
+
+	return p.Pet.getStatus()
 }
 
 func (p *PetMeta) UpdateStatus(attr attributes.Attributes) {
