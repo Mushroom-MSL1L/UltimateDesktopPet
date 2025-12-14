@@ -1,0 +1,43 @@
+name: Go tests
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/go_test.yml"
+  pull_request:
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/go_test.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run unit tests
+        run: |
+          # Exclude `app/desktop_pet` (Wails main package) because it embeds `frontend/dist`,
+          # which is not present unless the frontend build has been run.
+          go test \
+            ./pkg/... \
+            ./app/desktop_pet/internal/activities/... \
+            ./app/desktop_pet/internal/configs/... \
+            ./app/desktop_pet/internal/database/... \
+            ./app/desktop_pet/internal/file/... \
+            ./app/desktop_pet/internal/items/... \
+            ./app/desktop_pet/internal/pet/... \
+            ./app/sync_server/...

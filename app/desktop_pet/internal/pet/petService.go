@@ -63,12 +63,12 @@ func (p *PetMeta) UseItemByID(itemID uint) error {
 	p.Pet.Lock()
 	oldPet := p.GetPetStatus()
 	if (oldPet.Money + item.Money) < 0 {
-		errMessage := fmt.Sprintf("UseItem: pet has not enough money to use %s", item.Name)
-		pp.Warn(pp.Pet, errMessage)
+		useErr := fmt.Errorf("UseItem: pet has not enough money to use %s", item.Name)
+		pp.Warn(pp.Pet, "%v", useErr)
 		p.Pet.Unlock()
 
-		pp.Warn(pp.Items, "UseItemByID: failed to use item ID %d: %v", itemID, err)
-		return fmt.Errorf(errMessage)
+		pp.Warn(pp.Items, "UseItemByID: failed to use item ID %d: %v", itemID, useErr)
+		return useErr
 	}
 	p.UpdateStatus(item.Attributes)
 	p.Pet.Unlock()

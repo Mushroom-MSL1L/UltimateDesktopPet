@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/joho/godotenv v1.5.1
-	github.com/wailsapp/wails/v2 v2.10.2
+	github.com/wailsapp/wails/v2 v2.11.0
 	google.golang.org/genai v1.39.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/sqlite v1.6.0
