@@ -12,6 +12,7 @@ import (
 	"github.com/Mushroom-MSL1L/UltimateDesktopPet/app/desktop_pet/internal/pet"
 	_ "github.com/Mushroom-MSL1L/UltimateDesktopPet/app/desktop_pet/internal/pet"
 
+	"github.com/Mushroom-MSL1L/UltimateDesktopPet/pkg/configLoader"
 	pp "github.com/Mushroom-MSL1L/UltimateDesktopPet/pkg/print"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -34,7 +35,7 @@ func NewApp(configPath string) *App {
 	}
 	app.ctx = context.Background()
 
-	app.configs = configs.LoadConfig(configPath, &configs.System{})
+	app.configs = configLoader.LoadConfig(configPath, &configs.System{})
 	sCfg := app.configs
 
 	app.ItemsMeta.DB.InitDB(app.ctx, sCfg.StaticAssetsDBDir, database.StaticAssets)
