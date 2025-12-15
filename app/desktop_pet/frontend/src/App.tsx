@@ -7,6 +7,8 @@ import {
   useState,
 } from "react";
 import { ChatWithPet } from "../wailsjs/go/chat/ChatMeta";
+import { LoadItemFrameByID } from "../wailsjs/go/items/ItemsMeta";
+import { UseItemByID } from "../wailsjs/go/pet/PetMeta";
 import {
   AdjustWindowFromBottom,
   AdjustWindowFromLeftBottom,
@@ -18,6 +20,7 @@ import {
   PetDialog,
   type ConversationMessage,
 } from "./components/Pet/PetDialog";
+import { PetShopDialog, type ShopItem } from "./components/Pet/PetShopDialog";
 import {
   SpriteAnimationKey,
   type SpriteFramesCache,
@@ -51,9 +54,11 @@ const baseAppShellStyle: CSSProperties = {
 };
 
 const PET_WINDOW_DEFAULT_SIZE = { width: 150, height: 150 };
-const QUICK_TALK_WINDOW_SIZE = { width: 320, height: 500 };
+const QUICK_TALK_WINDOW_SIZE = { width: 320, height: 550 };
 const DIALOG_WINDOW_SIZE = { width: 900, height: 500 };
+const SHOP_WINDOW_SIZE = { width: 900, height: 500 };
 const SPRITE_FRAME_DURATION_MS = 150;
+const ITEM_EFFECT_DURATION_MS = 900;
 const IDLE_WANDER_DELAY_MS = 5000;
 const WANDER_STEP_DISTANCE_PX = 8;
 const WANDER_STEP_INTERVAL_MS = 120;
@@ -66,6 +71,7 @@ function App() {
   const [isSpriteMoving, setIsSpriteMoving] = useState(false);
   const [isWandering, setIsWandering] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isShopOpen, setIsShopOpen] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [conversation, setConversation] = useState<ConversationMessage[]>([
     {
@@ -78,16 +84,27 @@ function App() {
     left: number;
     top: number;
   } | null>(null);
+  const [shopAnchor, setShopAnchor] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
   const [isQuickTalkOpen, setIsQuickTalkOpen] = useState(false);
   const [quickResponseMessage, setQuickResponseMessage] = useState<
     string | null
   >(null);
   const [isResponseBubbleOpen, setIsResponseBubbleOpen] = useState(false);
+  const [itemEffect, setItemEffect] = useState<{
+    key: number;
+    src: string;
+    alt: string;
+  } | null>(null);
   const framesCacheRef = useRef<SpriteFramesCache>({});
   const isMountedRef = useRef(true);
   const idleTimerRef = useRef<number | null>(null);
   const wanderStepTimerRef = useRef<number | null>(null);
   const wanderDirectionTimerRef = useRef<number | null>(null);
+  const itemUseTimerRef = useRef<number | null>(null);
+  const itemUseRequestIdRef = useRef(0);
   const wanderDirectionRef = useRef<WanderDirection>("left");
   const isWanderingRef = useRef(false);
   const lastInteractionRef = useRef<number>(Date.now());
@@ -102,13 +119,13 @@ function App() {
     : TRANSPARENT_BACKGROUND;
 
   const appShellStyle = useMemo<CSSProperties>(() => {
-    const alignment = isDialogOpen ? "flex-start" : "center";
+    const alignment = isDialogOpen || isShopOpen ? "flex-start" : "center";
     return {
       ...baseAppShellStyle,
       background: windowBackground,
       alignItems: alignment,
     };
-  }, [windowBackground, isDialogOpen]);
+  }, [windowBackground, isDialogOpen, isShopOpen]);
 
   const clearIdleTimer = useCallback(() => {
     if (idleTimerRef.current !== null) {
@@ -125,6 +142,13 @@ function App() {
     if (wanderDirectionTimerRef.current !== null) {
       window.clearTimeout(wanderDirectionTimerRef.current);
       wanderDirectionTimerRef.current = null;
+    }
+  }, []);
+
+  const clearItemUseTimer = useCallback(() => {
+    if (itemUseTimerRef.current !== null) {
+      window.clearTimeout(itemUseTimerRef.current);
+      itemUseTimerRef.current = null;
     }
   }, []);
 
@@ -293,7 +317,14 @@ function App() {
 
     WindowSetAlwaysOnTop(true);
 
-    preloadAnimations(["stand", "move_left", "move_right", "move_far"])
+    preloadAnimations([
+      "stand",
+      "move_left",
+      "move_right",
+      "move_far",
+      "drag",
+      "drop",
+    ])
       .then((cache) => {
         if (!isMountedRef.current) {
           return;
@@ -326,7 +357,7 @@ function App() {
 
   useEffect(() => {
     interactionPausedRef.current =
-      isDialogOpen || isQuickTalkOpen || isSpriteMoving;
+      isDialogOpen || isShopOpen || isQuickTalkOpen || isSpriteMoving;
     if (interactionPausedRef.current) {
       stopWandering();
       clearIdleTimer();
@@ -336,6 +367,7 @@ function App() {
   }, [
     clearIdleTimer,
     isDialogOpen,
+    isShopOpen,
     isQuickTalkOpen,
     isSpriteMoving,
     scheduleIdleTimer,
@@ -389,13 +421,16 @@ function App() {
     return () => {
       clearIdleTimer();
       clearWanderTimers();
+      clearItemUseTimer();
     };
-  }, [clearIdleTimer, clearWanderTimers]);
+  }, [clearIdleTimer, clearItemUseTimer, clearWanderTimers]);
 
   const handleOpenDialog = useCallback(
     (anchor: { left: number; top: number }) => {
       registerInteraction();
       setDialogAnchor(anchor);
+      setShopAnchor(null);
+      setIsShopOpen(false);
       setIsQuickTalkOpen(false);
       void AdjustWindowFromLeftBottom(
         DIALOG_WINDOW_SIZE.width,
@@ -416,6 +451,107 @@ function App() {
       : PET_WINDOW_DEFAULT_SIZE;
     void AdjustWindowFromLeftBottom(targetSize.width, targetSize.height);
   }, [isSpriteMoving, isWandering, registerInteraction]);
+
+  const handleOpenShop = useCallback(
+    (anchor: { left: number; top: number }) => {
+      registerInteraction();
+      setShopAnchor(anchor);
+      setDialogAnchor(null);
+      setIsDialogOpen(false);
+      setIsQuickTalkOpen(false);
+      void AdjustWindowFromLeftBottom(
+        SHOP_WINDOW_SIZE.width,
+        SHOP_WINDOW_SIZE.height
+      );
+      setIsShopOpen(true);
+    },
+    [registerInteraction]
+  );
+
+  const handleCloseShop = useCallback(() => {
+    registerInteraction();
+    setIsShopOpen(false);
+    setShopAnchor(null);
+    const shouldReopenCard = !isSpriteMoving && !isWandering;
+    setIsQuickTalkOpen(shouldReopenCard);
+    const targetSize = shouldReopenCard
+      ? QUICK_TALK_WINDOW_SIZE
+      : PET_WINDOW_DEFAULT_SIZE;
+    void AdjustWindowFromLeftBottom(targetSize.width, targetSize.height);
+  }, [isSpriteMoving, isWandering, registerInteraction]);
+
+  const playUseItemAnimation = useCallback(
+    async (itemFrame: string | null, itemName?: string) => {
+      const requestId = itemUseRequestIdRef.current + 1;
+      itemUseRequestIdRef.current = requestId;
+
+      clearItemUseTimer();
+
+      if (itemFrame) {
+        setItemEffect({
+          key: requestId,
+          src: itemFrame,
+          alt: itemName ? `Using ${itemName}` : "Using item",
+        });
+      } else {
+        setItemEffect(null);
+      }
+
+      const dropFrames = await ensureAnimationFrames(
+        "drop",
+        framesCacheRef.current
+      );
+
+      if (!isMountedRef.current || requestId !== itemUseRequestIdRef.current) {
+        return;
+      }
+
+      const dragFrame = dropFrames[3];
+      if (dragFrame) {
+        setPetFrames([dragFrame]);
+      } else {
+        void applyAnimationFrames("stand");
+      }
+
+      const durationMs = ITEM_EFFECT_DURATION_MS;
+
+      itemUseTimerRef.current = window.setTimeout(() => {
+        if (
+          !isMountedRef.current ||
+          requestId !== itemUseRequestIdRef.current
+        ) {
+          return;
+        }
+        setItemEffect(null);
+        void applyAnimationFrames("stand");
+      }, durationMs);
+    },
+    [applyAnimationFrames, clearItemUseTimer]
+  );
+
+  const handlePurchaseItem = useCallback(
+    async (item: ShopItem, itemFrame: string | null) => {
+      registerInteraction();
+      await UseItemByID(item.id);
+
+      let frame = itemFrame;
+      if (!frame) {
+        try {
+          frame = await LoadItemFrameByID(item.id);
+        } catch (error) {
+          console.warn(
+            "LoadItemFrameByID failed after purchase",
+            item.id,
+            error
+          );
+          frame = null;
+        }
+      }
+
+      await playUseItemAnimation(frame, item.name);
+    },
+    [playUseItemAnimation, registerInteraction]
+  );
 
   const sendMessage = useCallback(
     async (message: string) => {
@@ -490,8 +626,11 @@ function App() {
 
   const handleShowQuickTalk = useCallback(() => {
     registerInteraction();
+    if (isDialogOpen || isShopOpen) {
+      return;
+    }
     setIsQuickTalkOpen((previous) => {
-      if (!previous && !isDialogOpen) {
+      if (!previous && !isDialogOpen && !isShopOpen) {
         void AdjustWindowFromBottom(
           QUICK_TALK_WINDOW_SIZE.width,
           QUICK_TALK_WINDOW_SIZE.height
@@ -499,7 +638,7 @@ function App() {
       }
       return true;
     });
-  }, [isDialogOpen, registerInteraction]);
+  }, [isDialogOpen, isShopOpen, registerInteraction]);
 
   const handleDismissResponseBubble = useCallback(() => {
     registerInteraction();
@@ -510,7 +649,7 @@ function App() {
   const handleHideQuickTalk = useCallback(() => {
     registerInteraction();
     setIsQuickTalkOpen((previous) => {
-      if (previous && !isDialogOpen) {
+      if (previous && !isDialogOpen && !isShopOpen) {
         void AdjustWindowFromBottom(
           PET_WINDOW_DEFAULT_SIZE.width,
           PET_WINDOW_DEFAULT_SIZE.height
@@ -519,7 +658,12 @@ function App() {
       return false;
     });
     handleDismissResponseBubble();
-  }, [handleDismissResponseBubble, isDialogOpen, registerInteraction]);
+  }, [
+    handleDismissResponseBubble,
+    isDialogOpen,
+    isShopOpen,
+    registerInteraction,
+  ]);
 
   const handleSpriteMoveStart = useCallback(() => {
     registerInteraction();
@@ -536,6 +680,8 @@ function App() {
       <Pet
         sprite={sprite}
         onOpenDialog={handleOpenDialog}
+        onOpenShop={handleOpenShop}
+        itemEffect={itemEffect}
         isQuickTalkOpen={isQuickTalkOpen}
         onSendQuickMessage={handleSendQuickMessage}
         onRequestQuickTalk={handleShowQuickTalk}
@@ -556,6 +702,13 @@ function App() {
         isBusy={isSendingMessage}
         messages={conversation}
         anchorPosition={dialogAnchor}
+      />
+
+      <PetShopDialog
+        open={isShopOpen}
+        onClose={handleCloseShop}
+        anchorPosition={shopAnchor}
+        onPurchaseItem={handlePurchaseItem}
       />
     </div>
   );

@@ -1,11 +1,19 @@
 import {
+  PetFramesDrag,
+  PetFramesDrop,
   PetFramesMoveFar,
   PetFramesMoveLeft,
   PetFramesMoveRight,
   PetFramesStand,
 } from "../../wailsjs/go/pet/PetMeta";
 
-export type SpriteAnimationKey = "stand" | "move_left" | "move_right" | "move_far";
+export type SpriteAnimationKey =
+  | "stand"
+  | "move_left"
+  | "move_right"
+  | "move_far"
+  | "drag"
+  | "drop";
 
 type SpriteFramesCache = Partial<Record<SpriteAnimationKey, string[]>>;
 
@@ -16,6 +24,8 @@ const animationLoaders: Record<SpriteAnimationKey, FrameLoader> = {
   move_left: PetFramesMoveLeft,
   move_right: PetFramesMoveRight,
   move_far: PetFramesMoveFar,
+  drag: PetFramesDrag,
+  drop: PetFramesDrop,
 };
 
 async function loadFrames(animation: SpriteAnimationKey): Promise<string[]> {

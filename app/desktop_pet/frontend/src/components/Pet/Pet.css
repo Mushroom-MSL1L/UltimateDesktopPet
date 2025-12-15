@@ -32,6 +32,50 @@
   cursor: grabbing;
 }
 
+@keyframes floatUpDown {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.pet-item-effect {
+  --wails-draggable: no-drag;
+  -webkit-app-region: no-drag;
+  position: absolute;
+  bottom: -10px;
+  left: 0px;
+  width: 56px;
+  height: 56px;
+  transform: translate(0, 0) scale(0.8);
+  opacity: 1;
+  pointer-events: none;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.6));
+  z-index: 3;
+  animation: pet-item-effect-pop 100ms;
+  animation-iteration-count: infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes pet-item-effect-pop {
+  0% {
+    transform: translateY(0) rotate(20deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(0deg);
+  }
+  100% {
+    transform: translateY(0) rotate(-10deg);
+  }
+}
+
 .response-bubble {
   --wails-draggable: no-drag;
   -webkit-app-region: no-drag;
