@@ -43,12 +43,23 @@ update_deps() {
 # ---------- Desktop Pet ----------
 desktop_pet_dev() {
     echo "=== Desktop Pet: wails dev ==="
+
+    if ! command -v wails >/dev/null 2>&1; then
+        echo "wails not found, installing..."
+        go install github.com/wailsapp/wails/v2/cmd/wails@latest
+    fi
+
     cd "$DESKTOP_PET_DIR"
     run_or_reset "DESKTOP_PET_CONFIG_DIR=\"$DESKTOP_PET_CONFIG_DIR\" wails dev" "./reset.sh"
 }
 
 desktop_pet_build() {
     echo "=== Desktop Pet: wails build & create shortcut ==="
+
+    if ! command -v wails >/dev/null 2>&1; then
+        echo "wails not found, installing..."
+        go install github.com/wailsapp/wails/v2/cmd/wails@latest
+    fi
 
     OS_TYPE="$(uname -s)"
     case "$OS_TYPE" in
@@ -102,6 +113,11 @@ EOF
 sync_server_run() {
     echo "=== Sync Server: swagger + run ==="
     cd "$SYNC_SERVER_DIR"
+
+    if ! command -v swag >/dev/null 2>&1; then
+        echo "swag not found, installing..."
+        go install github.com/swaggo/swag/cmd/swag@latest
+    fi
 
     echo ">> swag fmt"
     swag fmt
