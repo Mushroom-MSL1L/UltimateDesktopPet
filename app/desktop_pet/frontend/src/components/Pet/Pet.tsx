@@ -15,6 +15,7 @@ type PetProps = {
   sprite: string;
   onOpenDialog: (anchor: AnchorPosition) => void;
   onOpenShop: (anchor: AnchorPosition) => void;
+  onOpenConfig: (anchor: AnchorPosition) => void;
   itemEffect?: ItemEffect | null;
   isQuickTalkOpen: boolean;
   onSendQuickMessage: (message: string) => void | Promise<void>;
@@ -33,6 +34,7 @@ export function Pet({
   sprite,
   onOpenDialog,
   onOpenShop,
+  onOpenConfig,
   itemEffect,
   isQuickTalkOpen,
   onSendQuickMessage,
@@ -87,6 +89,12 @@ export function Pet({
     notifyInteraction();
     const anchor = computeAnchorPosition();
     onOpenShop(anchor);
+  };
+
+  const handleOpenConfig = () => {
+    notifyInteraction();
+    const anchor = computeAnchorPosition();
+    onOpenConfig(anchor);
   };
 
   const handleShellMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
@@ -170,6 +178,13 @@ export function Pet({
             onClick={handleOpenShop}
           >
             Shop
+          </button>
+          <button
+            type="button"
+            className="pet-talk-actions__button"
+            onClick={handleOpenConfig}
+          >
+            Settings
           </button>
           <button
             type="button"

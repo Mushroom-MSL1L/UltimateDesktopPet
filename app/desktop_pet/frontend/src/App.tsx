@@ -21,6 +21,7 @@ import {
   type ConversationMessage,
 } from "./components/Pet/PetDialog";
 import { PetShopDialog, type ShopItem } from "./components/Pet/PetShopDialog";
+import { SystemConfigDialog } from "./components/SystemConfigDialog";
 import {
   SpriteAnimationKey,
   type SpriteFramesCache,
@@ -57,6 +58,7 @@ const PET_WINDOW_DEFAULT_SIZE = { width: 150, height: 150 };
 const QUICK_TALK_WINDOW_SIZE = { width: 320, height: 550 };
 const DIALOG_WINDOW_SIZE = { width: 900, height: 500 };
 const SHOP_WINDOW_SIZE = { width: 900, height: 500 };
+const CONFIG_WINDOW_SIZE = { width: 1200, height: 640 };
 const SPRITE_FRAME_DURATION_MS = 150;
 const ITEM_EFFECT_DURATION_MS = 900;
 const IDLE_WANDER_DELAY_MS = 5000;
@@ -72,6 +74,7 @@ function App() {
   const [isWandering, setIsWandering] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isShopOpen, setIsShopOpen] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [conversation, setConversation] = useState<ConversationMessage[]>([
     {
@@ -85,6 +88,10 @@ function App() {
     top: number;
   } | null>(null);
   const [shopAnchor, setShopAnchor] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
+  const [configAnchor, setConfigAnchor] = useState<{
     left: number;
     top: number;
   } | null>(null);
@@ -119,13 +126,14 @@ function App() {
     : TRANSPARENT_BACKGROUND;
 
   const appShellStyle = useMemo<CSSProperties>(() => {
-    const alignment = isDialogOpen || isShopOpen ? "flex-start" : "center";
+    const alignment =
+      isDialogOpen || isShopOpen || isConfigOpen ? "flex-start" : "center";
     return {
       ...baseAppShellStyle,
       background: windowBackground,
       alignItems: alignment,
     };
-  }, [windowBackground, isDialogOpen, isShopOpen]);
+  }, [windowBackground, isConfigOpen, isDialogOpen, isShopOpen]);
 
   const clearIdleTimer = useCallback(() => {
     if (idleTimerRef.current !== null) {
@@ -357,7 +365,11 @@ function App() {
 
   useEffect(() => {
     interactionPausedRef.current =
-      isDialogOpen || isShopOpen || isQuickTalkOpen || isSpriteMoving;
+      isDialogOpen ||
+      isShopOpen ||
+      isConfigOpen ||
+      isQuickTalkOpen ||
+      isSpriteMoving;
     if (interactionPausedRef.current) {
       stopWandering();
       clearIdleTimer();
@@ -369,6 +381,7 @@ function App() {
     isDialogOpen,
     isShopOpen,
     isQuickTalkOpen,
+    isConfigOpen,
     isSpriteMoving,
     scheduleIdleTimer,
     stopWandering,
@@ -430,7 +443,9 @@ function App() {
       registerInteraction();
       setDialogAnchor(anchor);
       setShopAnchor(null);
+      setConfigAnchor(null);
       setIsShopOpen(false);
+      setIsConfigOpen(false);
       setIsQuickTalkOpen(false);
       void AdjustWindowFromLeftBottom(
         DIALOG_WINDOW_SIZE.width,
@@ -457,7 +472,9 @@ function App() {
       registerInteraction();
       setShopAnchor(anchor);
       setDialogAnchor(null);
+      setConfigAnchor(null);
       setIsDialogOpen(false);
+      setIsConfigOpen(false);
       setIsQuickTalkOpen(false);
       void AdjustWindowFromLeftBottom(
         SHOP_WINDOW_SIZE.width,
@@ -472,6 +489,36 @@ function App() {
     registerInteraction();
     setIsShopOpen(false);
     setShopAnchor(null);
+    const shouldReopenCard = !isSpriteMoving && !isWandering;
+    setIsQuickTalkOpen(shouldReopenCard);
+    const targetSize = shouldReopenCard
+      ? QUICK_TALK_WINDOW_SIZE
+      : PET_WINDOW_DEFAULT_SIZE;
+    void AdjustWindowFromLeftBottom(targetSize.width, targetSize.height);
+  }, [isSpriteMoving, isWandering, registerInteraction]);
+
+  const handleOpenConfig = useCallback(
+    (anchor: { left: number; top: number }) => {
+      registerInteraction();
+      setConfigAnchor(anchor);
+      setDialogAnchor(null);
+      setShopAnchor(null);
+      setIsDialogOpen(false);
+      setIsShopOpen(false);
+      setIsQuickTalkOpen(false);
+      void AdjustWindowFromLeftBottom(
+        CONFIG_WINDOW_SIZE.width,
+        CONFIG_WINDOW_SIZE.height
+      );
+      setIsConfigOpen(true);
+    },
+    [registerInteraction]
+  );
+
+  const handleCloseConfig = useCallback(() => {
+    registerInteraction();
+    setIsConfigOpen(false);
+    setConfigAnchor(null);
     const shouldReopenCard = !isSpriteMoving && !isWandering;
     setIsQuickTalkOpen(shouldReopenCard);
     const targetSize = shouldReopenCard
@@ -626,11 +673,11 @@ function App() {
 
   const handleShowQuickTalk = useCallback(() => {
     registerInteraction();
-    if (isDialogOpen || isShopOpen) {
+    if (isDialogOpen || isShopOpen || isConfigOpen) {
       return;
     }
     setIsQuickTalkOpen((previous) => {
-      if (!previous && !isDialogOpen && !isShopOpen) {
+      if (!previous && !isDialogOpen && !isShopOpen && !isConfigOpen) {
         void AdjustWindowFromBottom(
           QUICK_TALK_WINDOW_SIZE.width,
           QUICK_TALK_WINDOW_SIZE.height
@@ -638,7 +685,7 @@ function App() {
       }
       return true;
     });
-  }, [isDialogOpen, isShopOpen, registerInteraction]);
+  }, [isConfigOpen, isDialogOpen, isShopOpen, registerInteraction]);
 
   const handleDismissResponseBubble = useCallback(() => {
     registerInteraction();
@@ -649,7 +696,7 @@ function App() {
   const handleHideQuickTalk = useCallback(() => {
     registerInteraction();
     setIsQuickTalkOpen((previous) => {
-      if (previous && !isDialogOpen && !isShopOpen) {
+      if (previous && !isDialogOpen && !isShopOpen && !isConfigOpen) {
         void AdjustWindowFromBottom(
           PET_WINDOW_DEFAULT_SIZE.width,
           PET_WINDOW_DEFAULT_SIZE.height
@@ -661,6 +708,7 @@ function App() {
   }, [
     handleDismissResponseBubble,
     isDialogOpen,
+    isConfigOpen,
     isShopOpen,
     registerInteraction,
   ]);
@@ -681,6 +729,7 @@ function App() {
         sprite={sprite}
         onOpenDialog={handleOpenDialog}
         onOpenShop={handleOpenShop}
+        onOpenConfig={handleOpenConfig}
         itemEffect={itemEffect}
         isQuickTalkOpen={isQuickTalkOpen}
         onSendQuickMessage={handleSendQuickMessage}
@@ -709,6 +758,12 @@ function App() {
         onClose={handleCloseShop}
         anchorPosition={shopAnchor}
         onPurchaseItem={handlePurchaseItem}
+      />
+
+      <SystemConfigDialog
+        open={isConfigOpen}
+        onClose={handleCloseConfig}
+        anchorPosition={configAnchor}
       />
     </div>
   );

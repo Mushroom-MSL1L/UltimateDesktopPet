@@ -94,6 +94,7 @@
   width: 150px;
   text-align: center;
   transition: opacity 150ms ease, transform 150ms ease;
+  z-index: 3;
 }
 
 .response-bubble::after {

@@ -1,13 +1,13 @@
 package configs
 
 type System struct {
-	UDPDBDir              string `yaml:"udpDBDir"`
-	StaticAssetsDBDir     string `yaml:"staticAssetsDBDir"`
-	StaticAssetsSQLDir    string `yaml:"staticAssetsSQLDir"`
-	PetImageFolder        string `yaml:"petImageFolder"`
-	ItemsImageFolder      string `yaml:"itemsImageFolder"`
-	ActivitiesImageFolder string `yaml:"activitiesImageFolder"`
-	ChatRolePlayContext   string `yaml:"chatRolePlayContext"`
+	UDPDBDir              string `yaml:"udpDBDir" json:"udpDBDir"`
+	StaticAssetsDBDir     string `yaml:"staticAssetsDBDir" json:"staticAssetsDBDir"`
+	StaticAssetsSQLDir    string `yaml:"staticAssetsSQLDir" json:"staticAssetsSQLDir"`
+	PetImageFolder        string `yaml:"petImageFolder" json:"petImageFolder"`
+	ItemsImageFolder      string `yaml:"itemsImageFolder" json:"itemsImageFolder"`
+	ActivitiesImageFolder string `yaml:"activitiesImageFolder" json:"activitiesImageFolder"`
+	ChatRolePlayContext   string `yaml:"chatRolePlayContext" json:"chatRolePlayContext"`
 }
 
 func (System) DefaultConfig() *System {
