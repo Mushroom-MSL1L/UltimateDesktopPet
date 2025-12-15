@@ -1,4 +1,4 @@
-package configs
+package configLoader
 
 import (
 	"os"
@@ -45,4 +45,3 @@ func TestLoadConfig_MergesWithExistingFile(t *testing.T) {
 		t.Fatalf("LoadConfig = %#v, want A=1 B=%q", cfg, "override")
 	}
 }
-

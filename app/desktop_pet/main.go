@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"embed"
+	"flag"
+	"os"
 
 	"github.com/Mushroom-MSL1L/UltimateDesktopPet/app/desktop_pet/internal/app"
 	_ "github.com/Mushroom-MSL1L/UltimateDesktopPet/app/desktop_pet/internal/app"
@@ -17,8 +19,6 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
-const configPath = "./configs/system.yaml"
-
 //go:embed all:frontend/dist
 var frontendBuild embed.FS
 
@@ -28,6 +28,7 @@ var icon []byte
 func main() {
 	// Create an instance of the app structure
 	windowService := windowservice.NewWindowService()
+	configPath := getConfigPath()
 	myapp := app.NewApp(configPath)
 	configService := configs.NewConfigService(configPath)
 
@@ -92,4 +93,20 @@ func main() {
 	if err != nil {
 		println("Error:", err.Error())
 	}
+}
+
+func getConfigPath() string {
+	var configPath string
+	flag.StringVar(&configPath, "config", "", "path to config file")
+	flag.Parse()
+
+	if configPath != "" {
+		return configPath
+	}
+
+	if env := os.Getenv("DESKTOP_PET_CONFIG_DIR"); env != "" {
+		return env
+	}
+
+	return "./configs/system.yaml"
 }
