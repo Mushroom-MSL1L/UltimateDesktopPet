@@ -41,7 +41,7 @@ func (d *DB) connectDB() {
 		}
 		waitTime := time.Second
 		time.Sleep(waitTime)
-		pp.Info(pp.DB, "DB %ded not response, wait %s seconds", waitTime)
+		pp.Info(pp.DB, "DB %ded not response, wait %v seconds", retry, waitTime)
 	}
 	if err != nil {
 		pp.Fatal(pp.DB, "failed to open database after retries: %v", err)
