@@ -32,21 +32,21 @@ func (d *DB) setdbFile(dbFile string) {
 
 func (d *DB) connectDB() {
 	var err error
-		for retry := 1; retry <= 5; retry++ {
-			pp.Info(pp.DB, "DB %ded trying", retry)
-			d.db, err = gorm.Open(sqlite.Open(d.dbFile), &gorm.Config{})
-			if err == nil {
-				pp.Assert(pp.DB, "DB connected")
-				return
-			}
-			waitTime := time.Second
-			time.Sleep(waitTime)
-			pp.Info(pp.DB, "DB %ded not response, wait %v seconds", retry, waitTime)
+	for retry := 1; retry <= 5; retry++ {
+		pp.Info(pp.DB, "DB %ded trying", retry)
+		d.db, err = gorm.Open(sqlite.Open(d.dbFile), &gorm.Config{})
+		if err == nil {
+			pp.Assert(pp.DB, "DB connected")
+			return
 		}
-		if err != nil {
-			pp.Fatal(pp.DB, "failed to open database after retries: %v", err)
-		}
+		waitTime := time.Second
+		time.Sleep(waitTime)
+		pp.Info(pp.DB, "DB %ded not response, wait %v seconds", retry, waitTime)
 	}
+	if err != nil {
+		pp.Fatal(pp.DB, "failed to open database after retries: %v", err)
+	}
+}
 
 func (d *DB) GetDB() *gorm.DB {
 	return d.db
