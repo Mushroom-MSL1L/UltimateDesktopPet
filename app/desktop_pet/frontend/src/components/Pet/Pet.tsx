@@ -3,14 +3,20 @@ import { Quit as QuitFromApp } from "../../../wailsjs/go/app/App";
 import "./Pet.css";
 import { TalkBar } from "./TalkBar";
 import { ResponseBubble } from "./ResponseBubble";
+import { PetStatusBars } from "./PetStatusBars";
 
 const ANCHOR_OFFSET_X = 16;
 
 type AnchorPosition = { left: number; top: number };
 
+type ItemEffect = { key: number; src: string; alt: string };
+
 type PetProps = {
   sprite: string;
   onOpenDialog: (anchor: AnchorPosition) => void;
+  onOpenShop: (anchor: AnchorPosition) => void;
+  onOpenConfig: (anchor: AnchorPosition) => void;
+  itemEffect?: ItemEffect | null;
   isQuickTalkOpen: boolean;
   onSendQuickMessage: (message: string) => void | Promise<void>;
   onRequestQuickTalk?: () => void;
@@ -27,6 +33,9 @@ type PetProps = {
 export function Pet({
   sprite,
   onOpenDialog,
+  onOpenShop,
+  onOpenConfig,
+  itemEffect,
   isQuickTalkOpen,
   onSendQuickMessage,
   onRequestQuickTalk,
@@ -76,6 +85,18 @@ export function Pet({
     onOpenDialog(anchor);
   };
 
+  const handleOpenShop = () => {
+    notifyInteraction();
+    const anchor = computeAnchorPosition();
+    onOpenShop(anchor);
+  };
+
+  const handleOpenConfig = () => {
+    notifyInteraction();
+    const anchor = computeAnchorPosition();
+    onOpenConfig(anchor);
+  };
+
   const handleShellMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
       return;
@@ -123,6 +144,15 @@ export function Pet({
           ref={spriteRef}
         />
       )}
+      {itemEffect ? (
+        <img
+          key={itemEffect.key}
+          src={itemEffect.src}
+          alt={itemEffect.alt}
+          draggable={false}
+          className="pet-item-effect"
+        />
+      ) : null}
       <ResponseBubble
         message={quickResponseMessage ?? null}
         open={isResponseBubbleOpen}
@@ -144,6 +174,20 @@ export function Pet({
           </button>
           <button
             type="button"
+            className="pet-talk-actions__button"
+            onClick={handleOpenShop}
+          >
+            Shop
+          </button>
+          <button
+            type="button"
+            className="pet-talk-actions__button"
+            onClick={handleOpenConfig}
+          >
+            Settings
+          </button>
+          <button
+            type="button"
             className="pet-talk-actions__button pet-talk-actions__button--danger"
             onClick={handleQuit}
           >
@@ -155,6 +199,7 @@ export function Pet({
           onSend={onSendQuickMessage}
           disabled={isChatBusy}
         />
+        <PetStatusBars open={isQuickTalkOpen} />
       </div>
     </div>
   );

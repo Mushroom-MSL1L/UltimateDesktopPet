@@ -6,6 +6,7 @@ import (
 
 	"github.com/Mushroom-MSL1L/UltimateDesktopPet/app/desktop_pet/internal/app"
 	_ "github.com/Mushroom-MSL1L/UltimateDesktopPet/app/desktop_pet/internal/app"
+	"github.com/Mushroom-MSL1L/UltimateDesktopPet/app/desktop_pet/internal/configs"
 	windowservice "github.com/Mushroom-MSL1L/UltimateDesktopPet/app/desktop_pet/internal/window"
 
 	"github.com/wailsapp/wails/v2"
@@ -28,6 +29,7 @@ func main() {
 	// Create an instance of the app structure
 	windowService := windowservice.NewWindowService()
 	myapp := app.NewApp(configPath)
+	configService := configs.NewConfigService(configPath)
 
 	err := wails.Run(&options.App{
 		Title:         "Ultimate Desktop Pet",
@@ -83,6 +85,7 @@ func main() {
 			myapp.ItemsMeta,
 			myapp.ActivityMeta,
 			myapp.ChatMeta,
+			configService,
 		},
 	})
 

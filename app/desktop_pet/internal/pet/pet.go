@@ -13,7 +13,7 @@ import (
 type Pet struct {
 	sync.Mutex
 	ID                    uint `json:"id" gorm:"primaryKey;autoIncrement"`
-	attributes.Attributes `json:"attributes" gorm:"embedded"`
+	attributes.Attributes `gorm:"embedded"`
 }
 
 const (
