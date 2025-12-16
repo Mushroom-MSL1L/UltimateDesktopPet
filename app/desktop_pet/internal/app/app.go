@@ -49,9 +49,8 @@ func NewApp(configPath string) *App {
 	app.PetMeta = pet.NewPetMeta(app.PetMeta.DB, app.ItemsMeta, app.ActivityMeta)
 	app.PetMeta.ST.SpecifiedImageFolder = sCfg.PetImageFolder
 
-	app.ChatMeta = chat.NewChatMeta(app.ctx)
+	app.ChatMeta = chat.NewChatMeta(app.ctx, configPath, sCfg.GeminiAPIKey, sCfg.ChatRolePlayContext)
 	app.ChatMeta.DB.InitDB(app.ctx, sCfg.UDPDBDir, database.Pets)
-	app.ChatMeta.RolePlayContext = sCfg.ChatRolePlayContext
 
 	return app
 }

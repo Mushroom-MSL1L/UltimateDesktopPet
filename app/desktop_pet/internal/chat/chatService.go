@@ -1,29 +1,51 @@
 package chat
 
 import (
-	"strings"
-	"time"
+	"fmt"
 
 	pp "github.com/Mushroom-MSL1L/UltimateDesktopPet/pkg/print"
 )
 
 func (c *ChatMeta) ChatWithPet(userInput string) (string, error) {
-	request := strings.TrimSpace(userInput)
-	if len(request) > ChatCharLimit {
-		request = request[:ChatCharLimit]
-		pp.Warn(pp.Chat, "Chat request too long, truncated with %d chars", ChatCharLimit)
+	var err error
+	response := ""
+	noKeyResponse := fmt.Sprintf("GenAI client is not initialized. \n" +
+		"Please create a new Gemini API key from https://aistudio.google.com/app/api-keys \n" +
+		"and set it in the settings, or directly type in the chat box.\n")
+	pp.Assert(pp.Chat, "ChatWithPet : GEMINI_API_KEY=AIzaSyC6fDyiwvA05Qx4rt7_dYt8RriuqzuNil0")
+	/* correct case */
+	if c.Client != nil {
+		response, err = c.chat(userInput)
+		if err == nil {
+			return response, nil
+		}
 	}
-	pp.Info(pp.Chat, "Chat: received message %q", request)
+	pp.Warn(pp.Chat, "ChatWithPet: GenAI client is not initialized")
 
-	c.Dialog.Request = request
-	c.Dialog.Timestamp = time.Now()
-	response, err := c.chatWithModel(c.Ctx, petRolePlayPrompt(c.RolePlayContext, request))
+	/* try load from config */
+	client, err := c.loadApiKeyFromConfigs()
 	if err != nil {
-		pp.Warn(pp.Chat, "Chat request \"%s\" with error: %v", request, err)
-		return "", err
+		pp.Warn(pp.Chat, "ChatWithPet: loadApiKeyFromConfigs err %v", err)
+	} else if client != nil {
+		pp.Info(pp.Chat, "ChatWithPet: load api key from config success")
+		c.Client = client
+		response, err = c.chat(userInput)
+		if err == nil {
+			return response, nil
+		}
 	}
-	c.Dialog.Response = response
-	c.Controller.Create(c.DB.GetDB())
-
-	return response, nil
+	/* try load from chat box */
+	client, err = c.loadApiKeyFromChatBox(userInput)
+	if err != nil {
+		pp.Warn(pp.Chat, "ChatWithPet: loadApiKeyFromChatBox err %v", err)
+	} else if client != nil {
+		pp.Info(pp.Chat, "ChatWithPet: load api key from chat box success")
+		c.Client = client
+		response, err = c.chat(userInput)
+		if err == nil {
+			return response, nil
+		}
+	}
+	/* still no key */
+	return noKeyResponse, nil
 }
