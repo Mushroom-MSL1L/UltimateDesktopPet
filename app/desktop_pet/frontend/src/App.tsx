@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { ChatWithPet } from "../wailsjs/go/chat/ChatMeta";
+import { LoadSystemConfig } from "../wailsjs/go/configs/ConfigService";
 import { LoadItemFrameByID } from "../wailsjs/go/items/ItemsMeta";
 import { UseItemByID } from "../wailsjs/go/pet/PetMeta";
 import {
@@ -67,6 +68,19 @@ const WANDER_STEP_INTERVAL_MS = 120;
 const WANDER_DIRECTION_CHANGE_MS = 2600;
 const INTERACTION_DEBOUNCE_MS = 120;
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "Something went wrong.";
+};
+
+const isGeminiKeyError = (message: string) =>
+  message.toLowerCase().includes("gemini api key missing");
+
 function App() {
   const [sprite, setSprite] = useState<string>("");
   const [petFrames, setPetFrames] = useState<string[]>([]);
@@ -76,6 +90,7 @@ function App() {
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isGeminiKeyMissing, setIsGeminiKeyMissing] = useState(false);
   const [conversation, setConversation] = useState<ConversationMessage[]>([
     {
       id: "intro",
@@ -119,6 +134,7 @@ function App() {
   const animationRequestIdRef = useRef(0);
   const scheduleIdleTimerRef = useRef<() => void>(() => {});
   const startWanderingRef = useRef<() => void>(() => {});
+  const wasConfigOpenRef = useRef(false);
 
   const isDevMode = import.meta.env.DEV;
   const windowBackground = isDevMode
@@ -134,6 +150,26 @@ function App() {
       alignItems: alignment,
     };
   }, [windowBackground, isConfigOpen, isDialogOpen, isShopOpen]);
+
+  const refreshGeminiKeyStatus = useCallback(async () => {
+    try {
+      const cfg = await LoadSystemConfig();
+      setIsGeminiKeyMissing(!cfg.geminiAPIKey?.trim());
+    } catch (error) {
+      console.warn("LoadSystemConfig failed while checking Gemini key", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshGeminiKeyStatus();
+  }, [refreshGeminiKeyStatus]);
+
+  useEffect(() => {
+    if (wasConfigOpenRef.current && !isConfigOpen) {
+      void refreshGeminiKeyStatus();
+    }
+    wasConfigOpenRef.current = isConfigOpen;
+  }, [isConfigOpen, refreshGeminiKeyStatus]);
 
   const clearIdleTimer = useCallback(() => {
     if (idleTimerRef.current !== null) {
@@ -527,6 +563,11 @@ function App() {
     void AdjustWindowFromLeftBottom(targetSize.width, targetSize.height);
   }, [isSpriteMoving, isWandering, registerInteraction]);
 
+  const openConfigFromDialog = useCallback(() => {
+    const anchor = dialogAnchor ?? configAnchor ?? { left: 0, top: 0 };
+    handleOpenConfig(anchor);
+  }, [configAnchor, dialogAnchor, handleOpenConfig]);
+
   const playUseItemAnimation = useCallback(
     async (itemFrame: string | null, itemName?: string) => {
       const requestId = itemUseRequestIdRef.current + 1;
@@ -622,6 +663,7 @@ function App() {
 
       try {
         const response = await ChatWithPet(trimmed);
+        setIsGeminiKeyMissing(false);
         const replyText = response ?? "I'm thinking about what to say...";
         setConversation((previous) => [
           ...previous,
@@ -634,8 +676,14 @@ function App() {
         return replyText;
       } catch (error) {
         console.error("ChatWithPet failed", error);
-        const fallbackText =
-          "I got distracted and missed that. Can you try again?";
+        const message = getErrorMessage(error);
+        const missingKey = isGeminiKeyError(message);
+        if (missingKey) {
+          setIsGeminiKeyMissing(true);
+        }
+        const fallbackText = missingKey
+          ? "I need a Gemini API key before I can chat. Open Settings to add it."
+          : "I got distracted and missed that. Can you try again?";
         setConversation((previous) => [
           ...previous,
           {
@@ -736,6 +784,7 @@ function App() {
         onRequestQuickTalk={handleShowQuickTalk}
         onCloseQuickTalk={handleHideQuickTalk}
         isChatBusy={isSendingMessage}
+        isGeminiKeyMissing={isGeminiKeyMissing}
         quickResponseMessage={quickResponseMessage}
         isResponseBubbleOpen={isResponseBubbleOpen}
         onDismissResponseBubble={handleDismissResponseBubble}
@@ -749,8 +798,10 @@ function App() {
         onClose={handleCloseDialog}
         onSend={handleSendDialogMessage}
         isBusy={isSendingMessage}
+        isGeminiKeyMissing={isGeminiKeyMissing}
         messages={conversation}
         anchorPosition={dialogAnchor}
+        onOpenSettings={openConfigFromDialog}
       />
 
       <PetShopDialog

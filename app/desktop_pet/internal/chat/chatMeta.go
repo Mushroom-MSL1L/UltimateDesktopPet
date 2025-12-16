@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Mushroom-MSL1L/UltimateDesktopPet/app/desktop_pet/internal/database"
 	pp "github.com/Mushroom-MSL1L/UltimateDesktopPet/pkg/print"
@@ -30,16 +31,20 @@ func newChatController(model **Dialog) *database.BaseController[Dialog] {
 	return &database.BaseController[Dialog]{Model: model}
 }
 
-func NewChatMeta(ctx context.Context) *ChatMeta {
+func NewChatMeta(ctx context.Context, geminiAPIKey string) *ChatMeta {
 	var err error
 	c := &ChatMeta{
 		Ctx:    ctx,
 		Dialog: &Dialog{},
 	}
 	c.Controller = newChatController(&c.Dialog)
-	c.Client, err = newGeminiClient()
+	c.Client, err = newGeminiClient(geminiAPIKey)
 	if err != nil {
-		pp.Fatal(pp.Chat, "newGeminiClient: err %v", err)
+		if errors.Is(err, errGeminiAPIKeyMissing) {
+			pp.Warn(pp.Chat, "Gemini API key missing; set geminiAPIKey in System settings to enable chat")
+		} else {
+			pp.Fatal(pp.Chat, "newGeminiClient: err %v", err)
+		}
 	}
 	return c
 }

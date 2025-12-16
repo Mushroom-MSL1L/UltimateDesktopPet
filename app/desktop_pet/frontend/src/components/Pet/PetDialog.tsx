@@ -1,6 +1,7 @@
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import {
   Box,
+  Alert,
   Button,
   Dialog,
   DialogContent,
@@ -26,6 +27,8 @@ type PetDialogProps = {
   isBusy?: boolean;
   messages: ConversationMessage[];
   anchorPosition?: AnchorPosition | null;
+  isGeminiKeyMissing?: boolean;
+  onOpenSettings?: () => void;
 };
 
 export function PetDialog({
@@ -35,6 +38,8 @@ export function PetDialog({
   isBusy = false,
   messages,
   anchorPosition,
+  isGeminiKeyMissing = false,
+  onOpenSettings,
 }: PetDialogProps) {
   const [draft, setDraft] = useState("");
 
@@ -45,13 +50,13 @@ export function PetDialog({
   }, [open]);
 
   const isSendDisabled = useMemo(
-    () => !draft.trim() || isBusy,
-    [draft, isBusy]
+    () => !draft.trim() || isBusy || isGeminiKeyMissing,
+    [draft, isBusy, isGeminiKeyMissing]
   );
 
   const handleSend = () => {
     const trimmed = draft.trim();
-    if (!trimmed || isBusy) {
+    if (!trimmed || isBusy || isGeminiKeyMissing) {
       return;
     }
     void onSend(trimmed);
@@ -128,6 +133,36 @@ export function PetDialog({
           minHeight: 280,
         }}
       >
+        {isGeminiKeyMissing ? (
+          <Alert
+            severity="warning"
+            sx={{
+              backgroundColor: "rgba(255,193,7,0.08)",
+              color: "#f5f5f5",
+              borderRadius: 1,
+              "& .MuiAlert-icon": { color: "#ffb300" },
+            }}
+            action={
+              onOpenSettings ? (
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={onOpenSettings}
+                  sx={{
+                    color: "#0b1221",
+                    backgroundColor: "#ffb300",
+                    "&:hover": { backgroundColor: "#f9a825" },
+                  }}
+                >
+                  Open settings
+                </Button>
+              ) : undefined
+            }
+          >
+            Add a Gemini API key in Settings to enable chatting.
+          </Alert>
+        ) : null}
+
         <Box
           sx={{
             flex: 1,
@@ -191,12 +226,16 @@ export function PetDialog({
           <TextField
             fullWidth
             size="small"
-            placeholder="Tell your pet something..."
+            placeholder={
+              isGeminiKeyMissing
+                ? "Add your Gemini API key in Settings to chat."
+                : "Tell your pet something..."
+            }
             value={draft}
             onChange={(
               event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => setDraft(event.target.value)}
-            disabled={isBusy}
+            disabled={isBusy || isGeminiKeyMissing}
             multiline
             minRows={1}
             maxRows={3}
