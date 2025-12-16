@@ -8,6 +8,14 @@
 
 
 ## How to run desktop_pet
+### Prepare Gemini Api key
+* You need to prepare free Gemini API key from [here](https://aistudio.google.com/app/api-keys)
+* Create a file at `./app/desktop_pet/configs/.env`
+* Place content with key
+```
+GEMINI_API_KEY=<your_api_key> 
+```
+
 ### For Windows user
 * Install Golang 
     * We recommend you to install version 1.24
