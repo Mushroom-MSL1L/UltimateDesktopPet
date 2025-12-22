@@ -126,4 +126,3 @@ func TestSpriteTool_LoadFramesFromDir_ErrorsWhenMissing(t *testing.T) {
 		t.Fatalf("expected error, got nil")
 	}
 }
-

@@ -1,7 +1,7 @@
 package models
 
 type Account struct {
-	Username     string `json:"username" example:"admin"`
+	Username string `json:"username" example:"admin"`
 	Password string `json:"password" example:"1234"`
 }
 

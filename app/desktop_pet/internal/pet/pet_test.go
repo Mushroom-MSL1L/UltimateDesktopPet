@@ -77,4 +77,3 @@ func TestPet_getStatus_ReturnsCopy(t *testing.T) {
 		t.Fatalf("modifying returned value should not affect original: p.Water=%d", p.Water)
 	}
 }
-
