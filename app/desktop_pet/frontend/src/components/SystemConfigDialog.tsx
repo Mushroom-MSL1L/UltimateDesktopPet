@@ -45,6 +45,7 @@ const fields: {
   helperText?: string;
   multiline?: boolean;
   minRows?: number;
+  type?: string;
 }[] = [
   {
     key: "udpDBDir",
@@ -75,6 +76,12 @@ const fields: {
     key: "activitiesImageFolder",
     label: "Activities images folder",
     helperText: "Folder under assets/activityImages to use for activities.",
+  },
+  {
+    key: "geminiAPIKey",
+    label: "Gemini API key",
+    helperText: "Key used for chat responses. Stored locally in system.yaml.",
+    type: "password",
   },
   {
     key: "chatRolePlayContext",
@@ -269,6 +276,8 @@ export function SystemConfigDialog({
                   size="small"
                   multiline={field.multiline}
                   minRows={field.minRows}
+                  type={field.type}
+                  autoComplete={field.type === "password" ? "new-password" : undefined}
                   disabled={isSaving}
                   sx={{
                     "& .MuiFormHelperText-root": {

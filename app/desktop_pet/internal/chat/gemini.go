@@ -2,39 +2,35 @@ package chat
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/joho/godotenv"
 	"google.golang.org/genai"
 )
 
-const envFilePathForGemini = "configs/.env"
+var errGeminiAPIKeyMissing = errors.New("gemini API key missing")
+
 const model = "gemini-2.5-flash"
 
-func newGeminiClient() (*genai.Client, error) {
-	ctx := context.Background()
-	err := godotenv.Load(envFilePathForGemini)
-	if err != nil {
-		err = fmt.Errorf(
-			"newGeminiClient: \n\tfailed to load .env file: %w \n\n\t"+
-				"We need user to provide a valid genimi api at %s, content like \"GEMINI_API_KEY=<your_api_key>\"\n\t"+
-				"You can generate a key by the link https://aistudio.google.com/app/api-keys",
-			err, envFilePathForGemini)
-		return nil, err
+func newGeminiClient(apiKey string) (*genai.Client, error) {
+	key := strings.TrimSpace(apiKey)
+	if key == "" {
+		return nil, fmt.Errorf("%w: set geminiAPIKey in system.yaml from the System settings dialog", errGeminiAPIKeyMissing)
 	}
-	client, err := genai.NewClient(ctx, nil)
+
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{APIKey: key})
 	if err != nil {
-		err = fmt.Errorf(
-			"newGeminiClient: \n\tfailed to load .env file: %w \n\n\t"+
-				"We need user to provide a valid genimi api at %s, content like \"GEMINI_API_KEY=<your_api_key>\"\n\t"+
-				"You can generate a key by the link https://aistudio.google.com/app/api-keys",
-			err, envFilePathForGemini)
-		return nil, err
+		return nil, fmt.Errorf("newGeminiClient: failed to init Gemini client: %w", err)
 	}
 	return client, err
 }
 
 func (c *ChatMeta) chatWithModel(ctx context.Context, request string) (response string, err error) {
+	if c.Client == nil {
+		return "", fmt.Errorf("%w: open System settings and add your key to geminiAPIKey", errGeminiAPIKeyMissing)
+	}
 	result, err := c.Client.Models.GenerateContent(
 		ctx,
 		model,

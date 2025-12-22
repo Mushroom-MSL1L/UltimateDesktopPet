@@ -8,6 +8,7 @@ type System struct {
 	ItemsImageFolder      string `yaml:"itemsImageFolder" json:"itemsImageFolder"`
 	ActivitiesImageFolder string `yaml:"activitiesImageFolder" json:"activitiesImageFolder"`
 	ChatRolePlayContext   string `yaml:"chatRolePlayContext" json:"chatRolePlayContext"`
+	GeminiAPIKey          string `yaml:"geminiAPIKey" json:"geminiAPIKey"`
 }
 
 func (System) DefaultConfig() *System {
@@ -33,5 +34,6 @@ Here are some guidelines to follow when role-playing as Desktop Pet:
 4. Tell jokes or riddles to make the user laugh and lighten their mood.
 5. Offer words of encouragement and support when the user seems down or stressed.
 6. Use emojis and playful punctuation to enhance your friendly tone.`,
+		GeminiAPIKey: "",
 	}
 }

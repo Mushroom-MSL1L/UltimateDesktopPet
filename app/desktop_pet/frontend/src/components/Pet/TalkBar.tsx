@@ -5,12 +5,16 @@ type TalkBarProps = {
   onSend: (message: string) => void | Promise<void>;
   disabled?: boolean;
   placeholder?: string;
+  missingGeminiKey?: boolean;
+  onOpenSettings?: () => void;
 };
 
 export function TalkBar({
   open,
   onSend,
   disabled = false,
+  missingGeminiKey = false,
+  onOpenSettings,
   placeholder = "Talk to your pet...",
 }: TalkBarProps) {
   const [draft, setDraft] = useState("");
@@ -28,8 +32,8 @@ export function TalkBar({
   }, [open]);
 
   const isSendDisabled = useMemo(
-    () => disabled || !draft.trim(),
-    [disabled, draft]
+    () => disabled || missingGeminiKey || !draft.trim(),
+    [disabled, draft, missingGeminiKey]
   );
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -54,6 +58,46 @@ export function TalkBar({
       className={`talk-bar${open ? " talk-bar--open" : ""}`}
       aria-hidden={!open}
     >
+      {missingGeminiKey ? (
+        <div
+          className="talk-bar__notice"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            background: "rgba(0,0,0,0.35)",
+            color: "#f5f5f5",
+            padding: "6px 10px",
+            borderRadius: 10,
+            marginBottom: 6,
+          }}
+        >
+          <span style={{ fontSize: 12 }}>
+            Add a Gemini API key in Settings to enable chat.
+          </span>
+          {onOpenSettings ? (
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="talk-bar__notice-button"
+              style={{
+                background: "#60a5fa",
+                color: "#0b1221",
+                border: "none",
+                borderRadius: 6,
+                padding: "4px 10px",
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              Open settings
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <form className="talk-bar__form" onSubmit={handleSubmit}>
         <input
           ref={inputRef}
@@ -62,7 +106,7 @@ export function TalkBar({
           value={draft}
           placeholder={placeholder}
           onChange={(event) => setDraft(event.target.value)}
-          disabled={disabled}
+          disabled={disabled || missingGeminiKey}
         />
         <div className="talk-bar__actions">
           <button
@@ -70,7 +114,7 @@ export function TalkBar({
             className="talk-bar__send-button"
             disabled={isSendDisabled}
           >
-            {disabled ? "..." : "Send"}
+            Send
           </button>
         </div>
       </form>

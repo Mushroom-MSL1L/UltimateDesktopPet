@@ -22,6 +22,7 @@ type PetProps = {
   onRequestQuickTalk?: () => void;
   onCloseQuickTalk?: () => void;
   isChatBusy?: boolean;
+  isGeminiKeyMissing?: boolean;
   quickResponseMessage: string | null;
   isResponseBubbleOpen: boolean;
   onDismissResponseBubble: () => void;
@@ -41,6 +42,7 @@ export function Pet({
   onRequestQuickTalk,
   onCloseQuickTalk,
   isChatBusy,
+  isGeminiKeyMissing = false,
   quickResponseMessage,
   isResponseBubbleOpen,
   onDismissResponseBubble,
@@ -197,7 +199,9 @@ export function Pet({
         <TalkBar
           open={isQuickTalkOpen}
           onSend={onSendQuickMessage}
-          disabled={isChatBusy}
+          disabled={isChatBusy || isGeminiKeyMissing}
+          missingGeminiKey={isGeminiKeyMissing}
+          onOpenSettings={handleOpenConfig}
         />
         <PetStatusBars open={isQuickTalkOpen} />
       </div>
