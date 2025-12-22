@@ -22,4 +22,3 @@ func TestInRange(t *testing.T) {
 		})
 	}
 }
-
