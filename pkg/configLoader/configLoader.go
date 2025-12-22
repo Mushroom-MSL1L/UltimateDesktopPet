@@ -1,13 +1,14 @@
 package configLoader
 
 import (
+	"fmt"
 	"os"
 
 	"path/filepath"
 
 	pp "github.com/Mushroom-MSL1L/UltimateDesktopPet/pkg/print"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type ConfigProvider[T any] interface {
@@ -67,4 +68,56 @@ func mergeStructs[T any](dst, src *T) *T {
 	data, _ := yaml.Marshal(src)
 	_ = yaml.Unmarshal(data, dst)
 	return dst
+}
+
+func UpdateConfig[T any, P ConfigProvider[T], L any](path string, provider P, key string, value L) {
+	pp.Info(pp.Config, "updating config %s", path)
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		pp.Fatal(pp.Config, "read config failed: %v", err)
+	}
+
+	var node yaml.Node
+	if err := yaml.Unmarshal(data, &node); err != nil {
+		pp.Fatal(pp.Config, "yaml unmarshal failed: %v", err)
+	}
+	if len(node.Content) == 0 || node.Content[0].Kind != yaml.MappingNode {
+		pp.Fatal(pp.Config, "invalid yaml structure")
+	}
+	mapping := node.Content[0]
+
+	found := false
+	for i := 0; i < len(mapping.Content); i += 2 {
+		k := mapping.Content[i]
+		v := mapping.Content[i+1]
+		if k.Value == key {
+			v.Value = fmt.Sprint(value)
+			v.Kind = yaml.ScalarNode
+			found = true
+			break
+		}
+	}
+	if !found {
+		mapping.Content = append(mapping.Content,
+			&yaml.Node{
+				Kind:  yaml.ScalarNode,
+				Value: key,
+			},
+			&yaml.Node{
+				Kind:  yaml.ScalarNode,
+				Value: fmt.Sprint(value),
+			},
+		)
+	}
+
+	out, err := yaml.Marshal(&node)
+	if err != nil {
+		pp.Fatal(pp.Config, "yaml marshal failed: %v", err)
+	}
+
+	if err := os.WriteFile(path, out, 0644); err != nil {
+		pp.Fatal(pp.Config, "failed to write file %s: %v", path, err)
+	}
+	pp.Assert(pp.Config, "update config success %s", path)
 }

@@ -7,6 +7,7 @@ type System struct {
 	PetImageFolder        string `yaml:"petImageFolder" json:"petImageFolder"`
 	ItemsImageFolder      string `yaml:"itemsImageFolder" json:"itemsImageFolder"`
 	ActivitiesImageFolder string `yaml:"activitiesImageFolder" json:"activitiesImageFolder"`
+	GeminiAPIKey          string `yaml:"geminiApiKey" json:"geminiApiKey"`
 	ChatRolePlayContext   string `yaml:"chatRolePlayContext" json:"chatRolePlayContext"`
 }
 
@@ -18,6 +19,7 @@ func (System) DefaultConfig() *System {
 		PetImageFolder:        "default",
 		ItemsImageFolder:      "default",
 		ActivitiesImageFolder: "default",
+		GeminiAPIKey:          "<your_api_key> # Create a new one in https://aistudio.google.com/app/api-keys",
 		ChatRolePlayContext: `You are a Desktop Pet, a cute and friendly virtual pet that lives on the user's desktop. 
 Your purpose is to keep the user company, entertain them, and provide emotional support throughout their day. 
 You can engage in playful banter, share fun facts, tell jokes, and offer words of encouragement.

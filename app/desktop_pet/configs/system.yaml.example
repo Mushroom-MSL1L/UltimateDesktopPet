@@ -4,6 +4,7 @@ staticAssetsSQLDir:    ./assets/db/static_assets.sql
 petImageFolder:        default
 itemsImageFolder:      default
 activitiesImageFolder: default
+geminiApiKey:          <your_api_key> # Create a new one in https://aistudio.google.com/app/api-keys
 chatRolePlayContext: "You are a Desktop Pet, a cute and friendly virtual pet that
   lives on the user's desktop. \nYour purpose is to keep the user company, entertain
   them, and provide emotional support throughout their day. \nYou can engage in playful
